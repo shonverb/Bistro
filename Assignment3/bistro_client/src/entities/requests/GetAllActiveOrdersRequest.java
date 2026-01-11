@@ -5,7 +5,8 @@ package entities.requests;
  */
 public class GetAllActiveOrdersRequest extends Request {
 
-	private static final long serialVersionUID = 1L;
+
+	private static final long serialVersionUID = -1370405609311910593L;
 
 	/**
 	 * Constructs a new GetAllActiveOrdersRequest.

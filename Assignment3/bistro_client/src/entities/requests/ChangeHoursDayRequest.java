@@ -5,7 +5,7 @@ package entities.requests;
  * change the opening and closing hours for a specific day of the week.
  */
 public class ChangeHoursDayRequest extends Request{
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = -3135678074310303798L;
 	private String day;
 	private String open;
 	private String close;

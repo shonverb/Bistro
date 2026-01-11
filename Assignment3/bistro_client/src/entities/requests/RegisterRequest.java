@@ -7,7 +7,7 @@ import entities.Subscriber;
  */
 public class RegisterRequest extends Request {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = -6407442402477950147L;
 	private Subscriber user;
 
 	/**

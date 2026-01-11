@@ -9,7 +9,7 @@ package entities.requests;
  * @see Request
  */
 public class CheckConfCodeRequest extends Request {
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 8362836490349079455L;
 	private String contact;
 
 	/**

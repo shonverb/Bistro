@@ -9,10 +9,10 @@ import java.util.List;
 /**
  * Order class representing a restaurant order.
  */
-public class Order implements Serializable {
-    private static final long serialVersionUID = 1L;
+public class Order implements Serializable{
 
-    private String orderNumber;         // from GET_NEXT_ORDER_NUMBER
+    private static final long serialVersionUID = -799336047605632156L;
+	private String orderNumber;         // from GET_NEXT_ORDER_NUMBER
     private String confirmationCode;    // computed from orderNumber
 
     private String orderDateTime;       // yyyy-MM-dd HH:mm:ss

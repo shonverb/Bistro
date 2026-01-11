@@ -7,7 +7,8 @@ package entities.requests;
  */
 public class GetHoursDateRequest extends Request {
 
-	private static final long serialVersionUID = 1L;
+
+	private static final long serialVersionUID = -1352813963901315413L;
 
 	/**
 	 * Constructs a GetHoursDateRequest with the appropriate request type and SQL

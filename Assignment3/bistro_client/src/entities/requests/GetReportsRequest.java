@@ -6,8 +6,8 @@ package entities.requests;
  * reports internally.
  */
 public class GetReportsRequest extends Request {
-    private static final long serialVersionUID = 1L;
-    private int month;
+    private static final long serialVersionUID = -2223654504686094882L;
+	private int month;
     private int year;
 
     // Default constructor (Previous Month)

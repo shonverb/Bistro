@@ -6,7 +6,6 @@ import java.util.Map;
 
 import java.sql.Connection;
 import java.sql.Date;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -44,27 +43,26 @@ import entities.Day;
  * */
 public class DBconnector {
 	/**The connection to the Database*/
-    private Connection conn;
+    //private Connection conn;
     
-    DateTimeFormatter f;
+    DateTimeFormatter f = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
  
     /**
      * Constructor, initiating the connection and fields
      * */
     public DBconnector(){
-        try //connect DB
-        {
+        //try //connect DB
+        //{
 
-			conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/bistro", "root", "");
+			//conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/bistro", "root", "");
         	//conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/bistro?allowLoadLocalInfile=true&serverTimezone=Asia/Jerusalem&useSSL=false", "root", "Hodvak123!");
 
-            System.out.println("SQL connection succeeded");
-            f = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            //System.out.println("SQL connection succeeded");
 
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            System.exit(1);
-        }
+        //} catch (SQLException ex) {
+        //ex.printStackTrace();
+        //    System.exit(1);
+        //}
 
 
     }
@@ -77,6 +75,7 @@ public class DBconnector {
     public  String checkConfCode(Request r) {
     	CheckConfCodeRequest req = (CheckConfCodeRequest) r;
     	String res="";
+    	Connection conn = ConnectionPool.getInstance().getConnection();
     	try (PreparedStatement stmt = conn.prepareStatement(r.getQuery())) {
     		stmt.setString(1, req.getcontact());
     		stmt.setTimestamp(2, Timestamp.valueOf(BistroServer.dateTime));
@@ -96,6 +95,9 @@ public class DBconnector {
 			e.printStackTrace();
 			return "ERROR:" + e.getMessage();
 		}
+    	finally {
+    		ConnectionPool.getInstance().returnConnection(conn);
+    	}
 		
     }
 
@@ -107,7 +109,7 @@ public class DBconnector {
 	 * @return The resulting string, a message to the user
 	 */
     public String addOrder(Order o,String query) {
-       
+        Connection conn = ConnectionPool.getInstance().getConnection();
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setInt(1, Integer.parseInt(o.getOrderNumber()));
@@ -140,6 +142,9 @@ public class DBconnector {
             //return "❌ Error saving order.";
             return "❌ ERROR: " + e.getClass().getName() + " | " + e.getMessage();
         }
+        finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
+        }
     }
     
     
@@ -153,6 +158,7 @@ public class DBconnector {
     	ShowTakenSlotsRequest req = (ShowTakenSlotsRequest) r;
     	LocalDateTime from = req.getFrom();
     	LocalDateTime to = req.getTo();
+    	Connection conn = ConnectionPool.getInstance().getConnection();
     	System.out.println("DEBUG: Querying DB for status='OPEN' between: " + from + " AND " + to);
         try (PreparedStatement stmt = conn.prepareStatement(r.getQuery())) {
             stmt.setTimestamp(1, Timestamp.valueOf(from));
@@ -171,6 +177,9 @@ public class DBconnector {
             e.printStackTrace();
             return "ERROR:" + e.getMessage();
         }
+        finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
+        }
 
     }
     
@@ -180,6 +189,7 @@ public class DBconnector {
 	 * @return The resulting string, the next order number
 	 */
     public String OrderNumber() {
+    	Connection conn = ConnectionPool.getInstance().getConnection();
         try (PreparedStatement stmt = conn.prepareStatement("SELECT IFNULL(MAX(order_number), 0) + 1 AS next_num FROM `order`");
              ResultSet rs = stmt.executeQuery()) {
 
@@ -189,6 +199,9 @@ public class DBconnector {
         } catch (SQLException e) {
             e.printStackTrace();
             return "ERROR:" + e.getMessage();
+        }
+        finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
         }
 		return "";
     }
@@ -207,6 +220,7 @@ public class DBconnector {
         String query = r.getQuery();
         String orderNum = ((ReadRequest) r).getOrderNum();
         String result = "Results:\n";
+        Connection conn = ConnectionPool.getInstance().getConnection();
 
         try {
             PreparedStatement stmt = conn.prepareStatement(query);
@@ -227,7 +241,10 @@ public class DBconnector {
         } catch (SQLException e) {
             e.printStackTrace();
             return "❌ Error reading order.";
+        } finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
         }
+        
 
         return result;
     }
@@ -241,6 +258,7 @@ public class DBconnector {
 	 * @return The resulting string, the email or empty string if not found
 	 */
     public String readEmail(String subId) {
+    	Connection conn = ConnectionPool.getInstance().getConnection();
 
         try {
             PreparedStatement stmt = conn.prepareStatement("SELECT email FROM `user` WHERE subscriber_id = ?");
@@ -256,6 +274,8 @@ public class DBconnector {
         } catch (SQLException e) {
             e.printStackTrace();
             return "";
+        } finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
         }
     }
   
@@ -265,6 +285,7 @@ public class DBconnector {
 	 * @return The resulting string, a message or the subscriber if found
 	 */
 	public String checkLogin(Request r) {
+    	Connection conn = ConnectionPool.getInstance().getConnection();
 		String query = r.getQuery();
 		int subcriberId = ((LoginRequest)r).getId();
 		try {
@@ -284,7 +305,10 @@ public class DBconnector {
 				}
 			} catch (SQLException e) {
 				e.printStackTrace();
-			}
+			} finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
+        }
+
 			return "";
 	}
 				
@@ -294,6 +318,7 @@ public class DBconnector {
 	 * @return The resulting string, message to the user
 	 */
 	public String addNewUser(Request r) {
+    	Connection conn = ConnectionPool.getInstance().getConnection();
 		String query = r.getQuery();
 		Subscriber user = ((RegisterRequest)r).getUser();
 		System.out.println("In add new user");
@@ -311,7 +336,10 @@ public class DBconnector {
 		} catch(SQLException e) {
 			e.printStackTrace();
 			return "ERROR: Couldn't add the user, please try again"; 
-		}
+		} finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
+        }
+
 		return "New user added successfully, please keep your ID handy for further login attempts\nUser is:\n"+user;
 		
 	}
@@ -322,6 +350,7 @@ public class DBconnector {
 	 * @return The resulting string, a message to the user
 	 */
 	public String cancelOrder(Request r) {
+    	Connection conn = ConnectionPool.getInstance().getConnection();
 	    // IMPORTANT: The query in 'r' MUST be a SELECT statement now!
 	    // Example: "SELECT * FROM `order` WHERE confirmation_code = ?"
 	    String code = ((CancelRequest)r).getCode();
@@ -354,7 +383,10 @@ public class DBconnector {
 	    } catch (SQLException e) {
 	        e.printStackTrace();
 	        return "Error: " + e.getMessage();
-	    }
+	    } finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
+        }
+
 	}
 	/**
 	 * the method gets all relevant tables from the database
@@ -362,6 +394,7 @@ public class DBconnector {
 	 * @return A list of relevant tables
 	 */
 	public List<Table> getRelevantTables() {
+    	Connection conn = ConnectionPool.getInstance().getConnection();
 		ArrayList<Table> tables = new ArrayList<>();
 		try {
 			PreparedStatement stmt = conn.prepareStatement("SELECT * FROM `table` WHERE ? >= active_from AND (? <= active_to OR active_to IS NULL);");
@@ -376,7 +409,10 @@ public class DBconnector {
 			return tables;
 		} catch (SQLException e) {
 			e.printStackTrace();
-		}
+		} finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
+        }
+
 		
 		return null;
 	}
@@ -388,6 +424,7 @@ public class DBconnector {
 	 * @return The resulting string, a message to the user
 	 */
 	public String updateDetails(Request r) {
+    	Connection conn = ConnectionPool.getInstance().getConnection();
 		String query = r.getQuery();
 		try {
 			PreparedStatement stmt = conn.prepareStatement(query);
@@ -399,7 +436,10 @@ public class DBconnector {
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return "Error updating details: " + e.getMessage();
-		}
+		} finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
+        }
+
 	}
 
 	/**
@@ -409,6 +449,7 @@ public class DBconnector {
 	 * @return The resulting string, a message to the user
 	 */
 	public String getOrderHistory(Request r) {
+    	Connection conn = ConnectionPool.getInstance().getConnection();
 		String query = r.getQuery();
 		String result = "";
 		try {
@@ -429,7 +470,10 @@ public class DBconnector {
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return "❌ Error retrieving order history.";
-		}
+		} finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
+        }
+
 
 		return result;
 	}
@@ -441,6 +485,7 @@ public class DBconnector {
 	 * @return The resulting string, a message to the user
 	 */
 	public String getAllActiveOrders(Request r) {
+    	Connection conn = ConnectionPool.getInstance().getConnection();
 		String query = r.getQuery();
 		String result = "";
 		try {
@@ -463,7 +508,10 @@ public class DBconnector {
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return "❌ Error retrieving active orders.";
-		}
+		} finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
+        }
+
 		return result;
 	}
 	
@@ -474,6 +522,7 @@ public class DBconnector {
 	 * @return The resulting string, a message to the user
 	 */
 	public String getAllSubscribers(Request r) {
+    	Connection conn = ConnectionPool.getInstance().getConnection();
 		String query = r.getQuery();
 		String result = "";
 		try {
@@ -493,7 +542,10 @@ public class DBconnector {
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return "❌ Error retrieving subscribers.";
-		}
+		} finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
+        }
+
 
 		return result;
 	}
@@ -506,6 +558,7 @@ public class DBconnector {
 	 * @return The resulting string, a message or the order details
 	 */
 	public String getOrderFromConfCode(String query, String confCode) {
+    	Connection conn = ConnectionPool.getInstance().getConnection();
 		try {
 			PreparedStatement stmt = conn.prepareStatement(query);
 			stmt.setString(1, confCode);
@@ -521,7 +574,10 @@ public class DBconnector {
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
-		}
+		} finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
+        }
+
 		
 		return "Not found";
 	}	
@@ -534,6 +590,7 @@ public class DBconnector {
 	 * @return The resulting string, a message to the user
 	 */
 	public String changeHoursDay(Request r) {
+    	Connection conn = ConnectionPool.getInstance().getConnection();
 	    ChangeHoursDayRequest req = (ChangeHoursDayRequest) r;
 	    String openTime = String.format("%02d:00:00", Integer.parseInt(req.getOpen()));
 	    String closeTime = String.format("%02d:00:00", Integer.parseInt(req.getClose()));
@@ -554,7 +611,10 @@ public class DBconnector {
 	    } catch (NumberFormatException e) {
 	        e.printStackTrace();
 	        return "Error: Invalid hour format.";
-	    }
+	    } finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
+        }
+
 	}
 	
 	/**
@@ -564,6 +624,7 @@ public class DBconnector {
 	 * @return The resulting string, a message to the user
 	 */
 	public String closeOrder(LeaveTableRequest r) {
+    	Connection conn = ConnectionPool.getInstance().getConnection();
 		String query = r.getQuery();
 		String confcode = r.getConfCode();
 		try {
@@ -583,7 +644,10 @@ public class DBconnector {
 		}
 		catch (SQLException e) {
 			e.printStackTrace();
-		}
+		} finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
+        }
+
 		return "Error";
 	}
 	
@@ -595,6 +659,7 @@ public class DBconnector {
 	 * @return The resulting string, a message to the user
 	 */
 	public String writeHoursDate(Request r) {
+    	Connection conn = ConnectionPool.getInstance().getConnection();
 	    WriteHoursDateRequest req = (WriteHoursDateRequest) r;
 	    String openTime;
 	    String closeTime;
@@ -620,7 +685,10 @@ public class DBconnector {
 	    } catch (SQLException e) {
 	        e.printStackTrace();
 	        return "Error inserting hours for date: " + e.getMessage();
-	    }
+	    } finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
+        }
+
 	}
 	
 	/**
@@ -629,6 +697,7 @@ public class DBconnector {
 	 * @return The next table ID
 	 */
 	private int getNextTableId() {
+    	Connection conn = ConnectionPool.getInstance().getConnection();
         try (PreparedStatement stmt = conn.prepareStatement("SELECT IFNULL(MAX(table_number), 0) + 1 AS next_num FROM `table`");
              ResultSet rs = stmt.executeQuery()) {
 
@@ -638,7 +707,10 @@ public class DBconnector {
         } catch (SQLException e) {
             e.printStackTrace();
             System.out.println("ERROR:" + e.getMessage());
+        } finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
         }
+
 		return -1;
 		
 	}
@@ -650,6 +722,7 @@ public class DBconnector {
 	 * @return true if the table was added successfully, false otherwise
 	 */
 	public boolean addNewTable(AddTableRequest req) {
+    	Connection conn = ConnectionPool.getInstance().getConnection();
 		String query = req.getQuery();
 		try {
 			PreparedStatement stmt = conn.prepareStatement(query);
@@ -663,7 +736,10 @@ public class DBconnector {
 			e.printStackTrace();
 			System.out.println(e.getMessage());
 			return false;
-		}
+		} finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
+        }
+
 		return true;
 	}
 	
@@ -674,6 +750,7 @@ public class DBconnector {
 	 * @return true if the table was removed successfully, false otherwise
 	 */
 	public boolean removeTable(RemoveTableRequest req) {
+    	Connection conn = ConnectionPool.getInstance().getConnection();
 		String query = req.getQuery();
 		try {
 			PreparedStatement stmt = conn.prepareStatement(query);
@@ -685,7 +762,10 @@ public class DBconnector {
 		} catch (SQLException e) {
 			e.printStackTrace();
 			System.out.println(e.getMessage());
-		}
+		} finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
+        }
+
 		return true;
 	}
 
@@ -696,6 +776,7 @@ public class DBconnector {
 	 * @return A map of expired order numbers and their associated contacts
 	 */
 	protected Map<String,String> ExpirePendingOrders(Set<String> OrdersInBistro) {
+    	Connection conn = ConnectionPool.getInstance().getConnection();
 	    Map<String,String> expiredOrders = new HashMap<>();
 	    String query = "SELECT order_number, contact, status FROM `order` WHERE status = 'OPEN' AND order_datetime <= ?;";
 	    LocalDateTime expirationTime = BistroServer.dateTime.minusMinutes(15);
@@ -716,7 +797,10 @@ public class DBconnector {
 	        
 	    } catch (SQLException e) {
 	        e.printStackTrace();
-	    }
+	    } finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
+        }
+
 	    return expiredOrders;
 	}
 	
@@ -726,6 +810,7 @@ public class DBconnector {
 	 * @return A map of order numbers and their associated contacts for notification
 	 */
 	protected Map<String,String> OrdersToNotify() {
+    	Connection conn = ConnectionPool.getInstance().getConnection();
 	    Map<String,String> contacts = new HashMap<>();
 	    String query = "SELECT order_number, contact FROM `order` WHERE status = 'OPEN' AND order_datetime = ?;";
 	    LocalDateTime notificationTime = BistroServer.dateTime.plusHours(2);
@@ -742,7 +827,10 @@ public class DBconnector {
 	        
 	    } catch (SQLException e) {
 	        e.printStackTrace();
-	    }
+	    } finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
+        }
+
 	    return contacts;
 	}
 	
@@ -752,6 +840,7 @@ public class DBconnector {
 	 * @return A list of all tables
 	 */
 	public List<Table> getAllTables() {
+    	Connection conn = ConnectionPool.getInstance().getConnection();
 		ArrayList<Table> tables = new ArrayList<>();
 		try {
 			PreparedStatement stmt = conn.prepareStatement("SELECT * FROM `table`;");
@@ -766,7 +855,10 @@ public class DBconnector {
 			return tables;
 		} catch (SQLException e) {
 			e.printStackTrace();
-		}
+		} finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
+        }
+
 		return null;
 	}
 	
@@ -777,6 +869,7 @@ public class DBconnector {
 	 * @return A list of all days with their hours
 	 */
 	public List<Day> getAllDaysHours(Request r) {
+    	Connection conn = ConnectionPool.getInstance().getConnection();
 		ArrayList<Day> days = new ArrayList<>();
 		try {
 			PreparedStatement stmt = conn.prepareStatement("SELECT * FROM `day`;");
@@ -790,7 +883,10 @@ public class DBconnector {
 			return days;
 		} catch (SQLException e) {
 			e.printStackTrace();
-		}
+		} finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
+        }
+
 		return null;
 	}
 	
@@ -801,6 +897,7 @@ public class DBconnector {
 	 * @return A list of all specific dates with their hours
 	 */
 	public List<SpecificDate> getAllDatesHours(Request r) {
+    	Connection conn = ConnectionPool.getInstance().getConnection();
 		ArrayList<SpecificDate> dates = new ArrayList<>();
 		try {
 			PreparedStatement stmt = conn.prepareStatement("SELECT * FROM `date`;");
@@ -814,7 +911,10 @@ public class DBconnector {
 			return dates;
 		} catch (SQLException e) {
 			e.printStackTrace();
-		}
+		} finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
+        }
+
 		return null;
 	}
 	
@@ -824,12 +924,17 @@ public class DBconnector {
 	 * @param orderNumber The order number
 	 */
 	public void markArrivalAtTerminal(String orderNumber) {
+    	Connection conn = ConnectionPool.getInstance().getConnection();
 	    String query = "UPDATE `order` SET actual_arrival = ? WHERE order_number = ? AND actual_arrival IS NULL";
 	    try (PreparedStatement stmt = conn.prepareStatement(query)) {
 	        stmt.setTimestamp(1, Timestamp.valueOf(BistroServer.dateTime));
 	        stmt.setInt(2, Integer.parseInt(orderNumber));
 	        stmt.executeUpdate();
 	    } catch (SQLException e) { e.printStackTrace(); }
+	    finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
+        }
+
 	}
 
 	/**
@@ -838,12 +943,17 @@ public class DBconnector {
 	 * @param orderNumber The order number
 	 */
 	public void markOrderAsSeated(String orderNumber) {
+    	Connection conn = ConnectionPool.getInstance().getConnection();
 	    String query = "UPDATE `order` SET seated_time = ? WHERE order_number = ? AND seated_time IS NULL";
 	    try (PreparedStatement stmt = conn.prepareStatement(query)) {
 	        stmt.setTimestamp(1, Timestamp.valueOf(BistroServer.dateTime));
 	        stmt.setInt(2, Integer.parseInt(orderNumber));
 	        stmt.executeUpdate();
 	    } catch (SQLException e) { e.printStackTrace(); }
+	    finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
+        }
+
 	}
 
 	/**
@@ -853,12 +963,17 @@ public class DBconnector {
 	 * @param orderNumber The order number
 	 */
 	public void changeStatus(String status, String orderNumber) {
+    	Connection conn = ConnectionPool.getInstance().getConnection();
 	    String query = "UPDATE `order` SET status = ? WHERE order_number = ?";
 	    try (PreparedStatement stmt = conn.prepareStatement(query)) {
 	        stmt.setString(1, status);
 	        stmt.setInt(2, Integer.parseInt(orderNumber));
 	        stmt.executeUpdate();
 	    } catch (SQLException e) { e.printStackTrace(); }
+	    finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
+        }
+
 	}
 	
 	/**
@@ -868,6 +983,7 @@ public class DBconnector {
 	 * @return A map containing the reports data
 	 */
 	public Map<String, Map<Integer, Double>> getReportsData(Request r) {
+    	Connection conn = ConnectionPool.getInstance().getConnection();
 	    GetReportsRequest req = (GetReportsRequest) r;
 	    
 	    // Determine which month/year to query
@@ -1020,11 +1136,16 @@ public class DBconnector {
 	         allData.get("AvgWaiting").put(h, avg);
 	     }
 	    } catch (SQLException e) { e.printStackTrace(); }
+	    finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
+        }
+
 
 	    return allData;
 	}
 
 	public void setOrderType(String orderNum,String type) {
+    	Connection conn = ConnectionPool.getInstance().getConnection();
 		String query = "UPDATE `order` SET type_of_order = ? WHERE order_number = ? AND type_of_order IS NULL;";
 		try{
 			PreparedStatement stmt = conn.prepareStatement(query);
@@ -1033,7 +1154,11 @@ public class DBconnector {
 			stmt.executeUpdate();
 		} catch (SQLException e) {
 			e.printStackTrace();
-		}
+		} finally {
+        	ConnectionPool.getInstance().returnConnection(conn);
+        }
+
+		
 	}
 	
 }

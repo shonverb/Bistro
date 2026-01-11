@@ -5,7 +5,8 @@ package entities.requests;
  */
 public class GetMaxTableRequest extends Request {
 
-	private static final long serialVersionUID = 1L;
+
+	private static final long serialVersionUID = 7248863229358859283L;
 
 	/**
 	 * Constructs a GetMaxTableRequest.

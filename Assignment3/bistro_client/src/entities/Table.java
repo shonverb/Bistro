@@ -5,9 +5,9 @@ import java.time.LocalDate;
 /**
  * A class representing a table in the bistro
  */
-public class Table implements Serializable, Comparable<Table> {
+public class Table implements Comparable<Table>, Serializable {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 7325742576731798068L;
 	/** the table's id*/
 	private int id;
 	/** the table's capacity*/

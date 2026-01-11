@@ -5,7 +5,8 @@ package entities.requests;
  */
 public class UpdateDetailsRequest extends Request {
 
-	private static final long serialVersionUID = 1L;
+
+	private static final long serialVersionUID = 6412164591689763483L;
 
 	/**
 	 * Constructs an UpdateDetailsRequest with the specified query.

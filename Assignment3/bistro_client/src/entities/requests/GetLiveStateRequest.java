@@ -6,7 +6,8 @@ package entities.requests;
  * GET_LIVE_BISTRO_STATE.
  */
 public class GetLiveStateRequest extends Request {
-	private static final long serialVersionUID = 1L;
+
+	private static final long serialVersionUID = 2414606050636627627L;
 
 	/**
 	 * Constructor for GetLiveStateRequest. Initializes the request with the

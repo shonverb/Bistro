@@ -5,7 +5,8 @@ package entities.requests;
  */
 public class ReserveRequest extends WriteRequest {
 
-	private static final long serialVersionUID = 1L;
+
+	private static final long serialVersionUID = 1618413611196120100L;
 
 	/**
 	 * Constructs a new ReserveRequest with the specified details.

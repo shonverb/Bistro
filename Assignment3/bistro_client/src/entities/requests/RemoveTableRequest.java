@@ -4,7 +4,7 @@ package entities.requests;
  * Request to remove a table from the database.
  */
 public class RemoveTableRequest extends Request {
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = -108745930514193747L;
 	int tableID;
 	
 	/**

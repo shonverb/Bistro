@@ -5,7 +5,7 @@ package entities.requests;
  * confirmation code.
  */
 public class GetTableRequest extends Request {
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 492767235657524221L;
 	private String confcode;
 
 	/**

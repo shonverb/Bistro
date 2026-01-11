@@ -4,8 +4,8 @@ package entities.requests;
  * A concrete implementation of Request for joining the waitlist.
  */
 public class JoinWaitlistRequest extends Request {
-    private static final long serialVersionUID = 1L;
-    private String orderDateTime;
+    private static final long serialVersionUID = -8741550332679773490L;
+	private String orderDateTime;
     private String numberOfGuests;
     private String subscriberId;
     private String contact;

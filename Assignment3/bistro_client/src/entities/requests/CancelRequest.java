@@ -6,7 +6,7 @@ package entities.requests;
  * be cancelled.
  */
 public class CancelRequest extends Request {
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = -474821641310298369L;
 	private String code;
 	
 	/**

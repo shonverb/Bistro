@@ -5,7 +5,7 @@ package entities.requests;
  */
 public class ReadRequest extends Request {
 
-	private static final long serialVersionUID = 1L; //id number that represent the version of the class in serialize time
+	private static final long serialVersionUID = -6823587599986808062L;
 	/** an id for recognizing the order*/
 	private String orderNum;
 	public ReadRequest(String orderNum) { //only primary key (order number) needed for reading details about existing order 

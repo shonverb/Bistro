@@ -2,7 +2,7 @@ package entities.requests;
 /** a derived class of request, which allows for updating orders*/
 public class UpdateRequest extends Request {
 	
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = -479178551918491397L;
 	private String orderNum;
 	private int guestsNum;
 	private String date;

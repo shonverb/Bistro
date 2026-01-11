@@ -5,7 +5,7 @@ package entities.requests;
  * adding a new one with the desired capacity.
  */
 public class UpdateTableCapacityRequest extends Request {
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 2136807209259641605L;
 	private RemoveTableRequest removeReq;
 	private AddTableRequest addReq;
 

@@ -5,8 +5,8 @@ package entities.requests;
  */
 public class ReadEmailRequest extends Request {
 
-    private static final long serialVersionUID = 1L;
-    private int subscriberId;
+    private static final long serialVersionUID = -3424593526604118732L;
+	private int subscriberId;
 
 	/**
 	 * Constructs a ReadEmailRequest with the specified subscriber ID.

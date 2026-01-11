@@ -2,7 +2,7 @@ package entities.requests;
 
 /**A request for handling a the login of a user*/
 public class LoginRequest extends Request {
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = -4077547286007567120L;
 	private int subscriberId;
 	
 	/**

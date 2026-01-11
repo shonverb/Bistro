@@ -4,8 +4,8 @@ package entities.requests;
  */
 public class WriteRequest extends Request {
 
-	private static final long serialVersionUID = 1L;
-    private String orderDateTime;       // yyyy-MM-dd HH:mm:ss
+    private static final long serialVersionUID = -6769511017937007225L;
+	private String orderDateTime;       // yyyy-MM-dd HH:mm:ss
     private String numberOfGuests;
     private String subscriberId;        // "0" means guest
     private String contact;             // phone/email or subscriber email

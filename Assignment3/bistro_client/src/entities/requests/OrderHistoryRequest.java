@@ -5,7 +5,8 @@ package entities.requests;
  */
 public class OrderHistoryRequest extends Request {
 	
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = -3105051314545762356L;
+
 	/**
 	 * Constructs an OrderHistoryRequest for the specified user ID.
 	 * 

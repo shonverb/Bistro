@@ -7,7 +7,8 @@ package entities.requests;
  */
 public class GetAllTablesRequest extends Request {
 
-	private static final long serialVersionUID = 1L;
+
+	private static final long serialVersionUID = -5074222560657654694L;
 
 	/**
 	 * 

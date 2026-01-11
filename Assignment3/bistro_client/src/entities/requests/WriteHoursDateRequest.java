@@ -5,7 +5,7 @@ package entities.requests;
  * into the database.
  */
 public class WriteHoursDateRequest extends Request{
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = -4418439440692756028L;
 	private String date;
 	private String open;
 	private String close;

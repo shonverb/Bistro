@@ -8,7 +8,7 @@ import java.time.LocalDate;
  * Represents a specific date with opening and closing times.
  */
 public class SpecificDate implements Serializable{
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = -708879168269297256L;
 	private LocalDate date;
 	private Time open;
 	private Time close;

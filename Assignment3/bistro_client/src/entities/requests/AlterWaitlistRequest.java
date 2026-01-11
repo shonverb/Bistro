@@ -4,8 +4,8 @@ package entities.requests;
  * A concrete implementation of Request for removing a customer from the waiting list.
  */
 public class AlterWaitlistRequest extends Request {
-    private static final long serialVersionUID = 1L;
-    private String confCode;
+    private static final long serialVersionUID = -7930899150645985508L;
+	private String confCode;
 
     /**
      * @param orderNum The unique identifier for the waitlist entry to be removed.

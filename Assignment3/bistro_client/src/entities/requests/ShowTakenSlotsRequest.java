@@ -7,9 +7,9 @@ import java.time.format.DateTimeFormatter;
  * a class that represents a request to show taken slots for a given number of guests and date/time
  * */
 public class ShowTakenSlotsRequest extends Request {
+	private static final long serialVersionUID = 7195377181018591704L;
 	/** date time formatter */
 	private static DateTimeFormatter f=DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    private static final long serialVersionUID = 1L;
     private int numberOfGuests;
     private String orderDateTime;
     private LocalDateTime from;

@@ -21,7 +21,7 @@ import entities.requests.ShowTakenSlotsRequest;
 public class BistroMonitor implements Runnable {
 	private BistroServer server;
 	private Map<Order, LocalDateTime> pending;
-
+	private static final EmailService emailService = new EmailService();
 	/**
 	 * Constructor for BistroMonitor.
 	 * 
@@ -45,7 +45,7 @@ public class BistroMonitor implements Runnable {
 				notifyAboutOrder();
 				trySeatFromWaitlist();
 				Thread.sleep(30000); // Check every 60 seconds
-				 BistroServer.dateTime = BistroServer.dateTime.plusMinutes(10);
+				 BistroServer.dateTime = BistroServer.dateTime.plusMinutes(15);
 				 System.out.println("Time advanced to: " + BistroServer.dateTime);
 
 			} catch (InterruptedException e) {
@@ -65,6 +65,7 @@ public class BistroMonitor implements Runnable {
 	    	String contact=entry.getValue();
 	    	System.out.println(" Order " + orderNumber
 					+ " has been notified through contact.");
+	    	if(contact.contains("@")) sendEmailOrderInTwoHours(orderNumber, contact);
 			ServerUI.updateInScreen("for contact: "+ contact+
 				"\n your order " + orderNumber
 				+ " is in 2 hours" 
@@ -91,6 +92,7 @@ public class BistroMonitor implements Runnable {
 	    	String contact=entry.getValue();
 	    	System.out.println(" Order " + orderNumber
 					+ " has expired before seating.");
+	    	if(contact.contains("@")) sendEmailOrderExpired(orderNumber, contact);
 			ServerUI.updateInScreen("for contact: "+ contact+
 				" Order " + orderNumber
 				+ " has expired before seating, please contact the bistro staff."
@@ -114,6 +116,7 @@ public class BistroMonitor implements Runnable {
 	        if (BistroServer.dateTime.isAfter(addedTime.plusMinutes(15))) {
 	            // Time exceeded 15 minutes
 	            System.out.println(" Seating time exceeded for order: " + order.getConfirmationCode());
+	            if(order.getContact().contains("@")) sendEmailOrderExpired(order.getOrderNumber(), order.getContact());
 	            ServerUI.updateInScreen("for contact: "+ order.getContact()+
 	                " \n Seating time exceeded for order: " + order.getOrderNumber()
 	                + " Please contact the bistro staff."
@@ -166,6 +169,7 @@ public class BistroMonitor implements Runnable {
 	            
 	            System.out.println(" Order " + order.getConfirmationCode()
 	                    + " exceeded 2 hours at table " + table.getId());
+	            if(order.getContact().contains("@")) sendEmailTimeExceeded(order.getOrderNumber(), order.getContact());
 	            ServerUI.updateInScreen("contact: "+ order.getContact()+
 	                " Order " + order.getOrderNumber()
 	                + "\nYour bill is " + (order.getSubscriberId().equals("0")?BistroServer.BILL : BistroServer.BILL*0.9) + " NIS. Thank you for dining with us!"
@@ -195,6 +199,7 @@ public class BistroMonitor implements Runnable {
 		    System.out.println("Tried to seat order from inAdvance, confCode: "+wl.getConfirmationCode()+", result is: "+res);
 		    if(res!=-1) {
 		    	toRemove.add(new WaitlistNode(wl));
+		    	if(wl.getContact().contains("@")) sendTableReadyEmail(wl.getContact(), wl.getOrderNumber(), res);
 		    	ServerUI.updateInScreen("for contact: "+wl.getContact()+"\n order number: "+wl.getOrderNumber()+ "\ntable number "+res+" got available for you,please come to the Bistro within 15 minute from this massage");
 		    	server.dbcon.changeStatus("OPEN", wl.getOrderNumber());
 		   	}
@@ -211,6 +216,7 @@ public class BistroMonitor implements Runnable {
 		    System.out.println("Tried to seat order from regular, confCode: "+wl2.getConfirmationCode()+", result is: "+res);
 		    if(res!=-1) {
 		    	toRemove.add(new WaitlistNode(wl2));
+		    	if(wl2.getContact().contains("@")) sendTableReadyEmail(wl2.getContact(), wl2.getOrderNumber(), res);
 		    	ServerUI.updateInScreen("for contact: "+wl2.getContact()+"\norder Number: "+wl2.getOrderNumber()+"\ntable number  "+res+" got available for you,please come to the Bistro within 15 minute from this massage");
 		    	server.dbcon.changeStatus("OPEN", wl2.getOrderNumber());
 		    }
@@ -265,5 +271,64 @@ public class BistroMonitor implements Runnable {
 			return (desiredTable !=null)? desiredTable.getId() : -1;
 		}
 		return -1;
+	}
+	
+	
+	private void sendEmailOrderInTwoHours(String orderNum,String contact) {
+		String subject = String.format("Reminder: Your reservation at The Bistro (Order #%s)", orderNum);
+		String content = String.format(
+			    "Hello,\n\n" +
+			    "We are looking forward to hosting you at The Bistro!\n\n" +
+			    "This is a friendly reminder that your reservation (Order #%s) is scheduled for today in approximately 2 hours.\n" +
+			    "Please try to arrive 5-10 minutes early to ensure we can seat you promptly.\n\n" +
+			    "See you soon,\n" +
+			    "The Bistro Team", 
+			    orderNum
+			);
+		emailService.sendEmail(contact, subject, content);
+	}
+	
+	private void sendEmailOrderExpired(String orderNum,String contact) {
+		String subject = String.format("Reminder: Your reservation at The Bistro (Order #%s)", orderNum);
+		String content = String.format(
+			    "Hello,\n\n" +
+			    "We noticed you haven't arrived for your reservation (Order #%s) yet.\n\n" +
+			    "As it has been over 15 minutes since your scheduled time, our system has automatically released the table to accommodate other waiting guests.\n" +
+			    "If this is a mistake or you are still on your way, please contact the host immediately.\n\n" +
+			    "We hope to see you another time.\n" +
+			    "The Bistro Team", 
+			    orderNum
+			);
+		emailService.sendEmail(contact, subject, content);
+	}
+	
+	private void sendEmailTimeExceeded(String orderNum, String contact) {
+		String subject = String.format("Reminder: Your reservation at The Bistro (Order #%s)", orderNum);
+		String content = String.format(
+			    "Hello,\n\n" +
+			    "We hope you are enjoying your meal with us!\n\n" +
+			    "We just wanted to gently notify you that your 2-hour seating window for Order #%s has come to an end.\n" +
+			    "We have guests waiting for reservations, so we would appreciate it if you could begin wrapping up your visit.\n\n" +
+			    "Thank you for understanding and for dining with us!\n" +
+			    "The Bistro Team", 
+			    orderNum
+			);
+		emailService.sendEmail(contact, subject, content);
+	}
+	
+	public void sendTableReadyEmail(String recipientEmail, String orderNum, int tableNumber) {
+	    String subject = String.format("Good news! Your table is ready (Order #%s)", orderNum);
+	    
+	    String body = String.format(
+	        "Hello,\n\n" +
+	        "Good news! Your table is now ready.\n\n" +
+	        "We have prepared Table #%d for your party (Order #%s).\n" +
+	        "Please head to the host stand within the next 5 minutes to be seated.\n\n" +
+	        "Enjoy your meal!\n" +
+	        "The Bistro Team", 
+	        tableNumber, orderNum
+	    );
+
+	    emailService.sendEmail(recipientEmail, subject, body);
 	}
 }

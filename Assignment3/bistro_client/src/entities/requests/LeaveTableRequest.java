@@ -7,7 +7,7 @@ package entities.requests;
  */
 public class LeaveTableRequest extends Request {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = -4430403792652017325L;
 	private String confCode;
 
 	/**

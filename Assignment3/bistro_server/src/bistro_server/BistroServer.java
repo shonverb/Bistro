@@ -1,6 +1,7 @@
 package bistro_server;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -47,7 +48,7 @@ public class BistroServer extends AbstractServer {
     private HashMap<RequestType,RequestHandler> handlers;
 
     private HashMap<Table,Order> currentBistro;
-    public static LocalDateTime dateTime = LocalDateTime.of(LocalDate.of(2026, 1, 8), LocalTime.of(15, 00));
+    public static LocalDateTime dateTime = LocalDateTime.of(LocalDate.of(2026, 1, 21), LocalTime.of(12, 00));
     
     public static final DateTimeFormatter DT_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
      /**A connection to the database*/
@@ -73,7 +74,6 @@ public class BistroServer extends AbstractServer {
         handlers.put(RequestType.LOGIN_REQUEST, dbcon::checkLogin);
         handlers.put(RequestType.REGISTER_REQUEST, dbcon::addNewUser);
         handlers.put(RequestType.CANCEL_REQUEST, dbcon::cancelOrder);
-        //handlers.put(RequestType.GET_TAKEN_SLOTS, this::checkAvailability);
         handlers.put(RequestType.RESERVE_TABLE, this::reserveTableInAdvance);
         handlers.put(RequestType.JOIN_WAITLIST, this::handleJoinWaitlist);
         handlers.put(RequestType.LEAVE_WAITLIST, this::handleLeaveWaitlist);
@@ -83,7 +83,6 @@ public class BistroServer extends AbstractServer {
         handlers.put(RequestType.CHECK_CONFCODE, dbcon::checkConfCode);
         handlers.put(RequestType.GET_ALL_ACTIVE_ORDERS, dbcon::getAllActiveOrders);
         handlers.put(RequestType.GET_ALL_SUBSCRIBERS, dbcon::getAllSubscribers);
-        //handlers.put(RequestType.TRY_SEAT,this::trySeat);
         handlers.put(RequestType.GET_TABLE, this::getTableForOrder);
         handlers.put(RequestType.LEAVE_TABLE,this::leaveTable);
         handlers.put(RequestType.CHANGE_HOURS_DAY, dbcon::changeHoursDay);
@@ -98,6 +97,8 @@ public class BistroServer extends AbstractServer {
         handlers.put(RequestType.GET_HOURS_DATE, dbcon::getAllDatesHours);
         handlers.put(RequestType.GET_HOURS_DAY, dbcon::getAllDaysHours);
         handlers.put(RequestType.GET_MAX_TABLE, this::getMaxTable);
+        
+        ConnectionPool.getInstance();
     }
     
     /**
@@ -113,7 +114,7 @@ public class BistroServer extends AbstractServer {
         System.out.println("Request of type " + r.getType() + " handled with result: " + result.toString());
         System.out.println("------------------------------------------------------------------------------");
         try {
-            client.sendToClient(result); // ALWAYS send response
+            client.sendToClient(result);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -480,6 +481,16 @@ public class BistroServer extends AbstractServer {
         } catch (Exception ex) {
             System.out.println("ERROR - Could not listen for clients!");
         }
+    }
+    
+    @Override
+    protected void serverStopped() {
+    	try {
+			ConnectionPool.getInstance().shutdown();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+    	System.exit(0);
     }
     
     /**

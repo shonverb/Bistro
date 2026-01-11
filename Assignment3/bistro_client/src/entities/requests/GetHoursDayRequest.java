@@ -5,7 +5,8 @@ package entities.requests;
  * database.
  */
 public class GetHoursDayRequest extends Request{
-	private static final long serialVersionUID = 1L;
+
+	private static final long serialVersionUID = 6731244524687517956L;
 
 	/**
 	 * Constructs a new GetHoursDayRequest.

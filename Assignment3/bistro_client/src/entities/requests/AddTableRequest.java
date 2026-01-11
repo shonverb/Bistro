@@ -4,10 +4,7 @@ package entities.requests;
  * Represents a request to add a new table to the restaurant.
  */
 public class AddTableRequest extends Request {
-	/**
-	 * Serial version UID for serialization.
-	 */
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = -5143115274171229327L;
 	int tableCapacity;
 
 	/**
