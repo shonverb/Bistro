@@ -64,7 +64,7 @@ public class OrderScreenController implements IController {
         contactBox.visibleProperty().bind(isLoggedIn.not());
         contactBox.managedProperty().bind(isLoggedIn.not());
         ClientUI.console.accept(new GetMaxTableRequest());
-        Thread.sleep(200);
+        Thread.sleep(1000);
         for (int i = 1; i <= maxTableCapacity; i++) {
         	guestsComboBox.getItems().add(i);
         }

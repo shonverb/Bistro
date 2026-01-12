@@ -121,7 +121,7 @@ public class LoginScreenController implements IController{
         if (!exceptionRaised) {
             LoginRequest r = new LoginRequest(id);
             ClientUI.console.accept(r);
-            Thread.sleep(200); // wait for server response
+            Thread.sleep(1000); // wait for server response
 
             if (!serverResponse.equals("Not found")) {
                 String[] args = serverResponse.split(",");

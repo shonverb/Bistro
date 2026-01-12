@@ -19,9 +19,6 @@ public class WorkerScreenController implements IController {
     private Button bistroManagementBtn;
 
     @FXML
-    private Button changeDetailsBtn;
-
-    @FXML
     private Button historyBtn;
 
     @FXML
@@ -68,18 +65,7 @@ public class WorkerScreenController implements IController {
     void onBistroManagementClick(ActionEvent event) {
     	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/BistroManagementScreen.fxml", user);
     }
-
-	/**
-	 * Handles the click event for the Change Details button. Navigates to the
-	 * Change Details screen.
-	 * 
-	 * @param event The action event triggered by the button click.
-	 */
-    @FXML
-    void onChangeDetailsClick(ActionEvent event) {
-    	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/ChangeDetailsScreen.fxml", user);
-    }
-
+    
     @FXML
     void onHistoryBtnClick(ActionEvent event) {
     	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/HistoryScreen.fxml", user);
@@ -104,7 +90,7 @@ public class WorkerScreenController implements IController {
 	 */
     @FXML
     void onNewOrderBtn(ActionEvent event) {
-    	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/OrderScreen.fxml", user);
+    	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/ClientScreen.fxml", user);
     }
 
 	/**

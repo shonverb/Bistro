@@ -18,8 +18,7 @@ public class CheckConfCodeRequest extends Request {
 	 * @param contact the contact associated with the order
 	 */
 	public CheckConfCodeRequest(String contact) {  
-		super(RequestType.CHECK_CONFCODE, "SELECT confirmation_code FROM `order` WHERE contact = ? AND order_datetime BETWEEN "
-				+ "DATE_SUB(?, INTERVAL 30 MINUTE) AND DATE_ADD(?, INTERVAL 30 MINUTE)");
+		super(RequestType.CHECK_CONFCODE, "SELECT confirmation_code FROM `order` WHERE contact = ? AND (status = 'OPEN' OR status = 'WAITING');");
 				
 		this.contact=contact;
 	}
