@@ -59,8 +59,6 @@ public class DBconnector {
     	Connection conn = ConnectionPool.getInstance().getConnection();
     	try (PreparedStatement stmt = conn.prepareStatement(r.getQuery())) {
     		stmt.setString(1, req.getcontact());
-    		//stmt.setTimestamp(2, Timestamp.valueOf(BistroServer.dateTime));
-    		//stmt.setTimestamp(3, Timestamp.valueOf(BistroServer.dateTime));
 			ResultSet rs = stmt.executeQuery();
 			while (rs.next()) {
 				res+=rs.getString(1)+"\n";
