@@ -19,6 +19,7 @@ public class CheckConfCodeRequest extends Request {
 	 */
 	public CheckConfCodeRequest(String contact) {  
 		super(RequestType.CHECK_CONFCODE, "SELECT confirmation_code FROM `order` WHERE contact = ? AND (status = 'OPEN' OR status = 'WAITING');");
+
 				
 		this.contact=contact;
 	}

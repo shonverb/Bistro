@@ -54,7 +54,7 @@ public class DBconnector {
         //try //connect DB
         //{
 
-			//conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/bistro", "root", "");
+
         	//conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/bistro?allowLoadLocalInfile=true&serverTimezone=Asia/Jerusalem&useSSL=false", "root", "Hodvak123!");
 
             //System.out.println("SQL connection succeeded");
@@ -84,13 +84,9 @@ public class DBconnector {
 			while (rs.next()) {
 				res+=rs.getString(1)+"\n";
 			} 
-			if(res.equals("")) {
-				return "no confiramtion codes found for your contact";
-			}
-			else {
-				ServerUI.updateInScreen("your relevent confiramtion codes for this contact are:\n"+res);
-			}
-			return "potential confiramtion codes has been sent to your contact";
+			return res;
+			
+			
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return "ERROR:" + e.getMessage();

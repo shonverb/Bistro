@@ -19,6 +19,7 @@ import entities.Order;
 import entities.Table;
 import entities.requests.AddTableRequest;
 import entities.requests.AlterWaitlistRequest;
+import entities.requests.CheckConfCodeRequest;
 import entities.requests.GetTableRequest;
 import entities.requests.JoinWaitlistRequest;
 import entities.requests.LeaveTableRequest;
@@ -80,7 +81,7 @@ public class BistroServer extends AbstractServer {
         handlers.put(RequestType.SPOT_WAITLIST, this::handleSpotWaitlist);
         handlers.put(RequestType.UPDATE_DETAILS, dbcon::updateDetails);
         handlers.put(RequestType.ORDER_HISTORY,dbcon::getOrderHistory);
-        handlers.put(RequestType.CHECK_CONFCODE, dbcon::checkConfCode);
+        handlers.put(RequestType.CHECK_CONFCODE, this::getPotentialConfCodes);
         handlers.put(RequestType.GET_ALL_ACTIVE_ORDERS, dbcon::getAllActiveOrders);
         handlers.put(RequestType.GET_ALL_SUBSCRIBERS, dbcon::getAllSubscribers);
         handlers.put(RequestType.GET_TABLE, this::getTableForOrder);
@@ -715,6 +716,21 @@ public class BistroServer extends AbstractServer {
 			}
 		}
 		return res;
+	}
+	public String getPotentialConfCodes(Request r) {
+		CheckConfCodeRequest req = (CheckConfCodeRequest) r;
+		String res = dbcon.checkConfCode(req);
+		String toSend = "";
+		if(res.equals("")) {
+			 toSend = "No confirmation codes found for that contact in the specified time frame.";
+		}
+		else {
+			 toSend = "Potential Confirmation codes has been sent to your email.";
+			 EmailService emailService = new EmailService();
+			 emailService.sendEmail(req.getcontact(), "Bistro Management - Confirmation Code Inquiry", "Potential Confirmation codes found: " + res);
+		}
+
+		return toSend;
 	}
 }
 
