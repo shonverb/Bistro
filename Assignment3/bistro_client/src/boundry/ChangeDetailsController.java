@@ -1,9 +1,9 @@
 package boundry;
 
 import entities.Subscriber;
-import entities.UpdateDetailsRequest;
 import entities.User;
 import entities.UserType;
+import entities.requests.UpdateDetailsRequest;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -57,10 +57,10 @@ public class ChangeDetailsController implements IController {
     @FXML
     void onBackBtnClick(ActionEvent event) {
     	if(user.getType() ==UserType.SUBSCRIBER) {
-    		ClientUI.console.switchScreen(this, event, "/boundry/ClientScreen.fxml", user);
+    		ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/ClientScreen.fxml", user);
     	}
     	else {
-			ClientUI.console.switchScreen(this, event, "/boundry/WorkerScreen.fxml", user);
+			ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/WorkerScreen.fxml", user);
 		}
     }
     

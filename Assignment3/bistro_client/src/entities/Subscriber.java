@@ -7,8 +7,8 @@ import java.util.Objects;
 /**
  * Subscriber class represents a subscriber user in the system.
  */
-public class Subscriber extends User implements Serializable {
-	private static final long serialVersionUID = 1L;
+public class Subscriber extends User implements Serializable{
+	private static final long serialVersionUID = -1659025603535708879L;
 	private int subscriberID;
 	private String userName;
 	private String firstName;

@@ -1,0 +1,91 @@
+/* GLOBAL THEME: Deep Green & White */
+.root {
+    -fx-font-family: 'Segoe UI', 'Open Sans', 'Helvetica', sans-serif;
+    -fx-background-color: #0f3d3e; 
+}
+
+/* CARDS: White containers */
+.card-pane {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 20;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 10, 0, 0, 5);
+}
+
+/* HEADERS */
+.title-text {
+    -fx-fill: #ffffff;
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+}
+
+.card-title {
+    -fx-fill: #1a1a1a;
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+}
+
+/* TEXT & LABELS */
+.label {
+    -fx-text-fill: #0f3d3e;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+.label-light {
+    -fx-text-fill: #e2e8f0;
+    -fx-font-size: 14px;
+}
+
+/* INPUTS */
+.text-field, .text-area, .combo-box, .date-picker {
+    -fx-background-color: #f3f4f6;
+    -fx-border-color: transparent;
+    -fx-background-radius: 8;
+    -fx-text-fill: #1a1a1a;
+    -fx-font-size: 13px;
+}
+.text-field:focused, .text-area:focused {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #0f3d3e;
+    -fx-border-radius: 8;
+}
+
+/* BUTTONS */
+.button {
+    -fx-background-color: #1a1a1a;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 30;
+    -fx-padding: 10 20;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 5, 0, 0, 2);
+}
+.button:hover {
+    -fx-background-color: #333333;
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+.button-secondary {
+    -fx-background-color: transparent;
+    -fx-border-color: #1a1a1a;
+    -fx-border-radius: 30;
+    -fx-text-fill: #1a1a1a;
+}
+/* White secondary button for dark backgrounds */
+.button-secondary-white {
+    -fx-background-color: transparent;
+    -fx-border-color: #ffffff;
+    -fx-border-radius: 30;
+    -fx-text-fill: #ffffff;
+}
+
+/* CHARTS (For Reports Screen) */
+.chart { -fx-padding: 10px; }
+.chart-content { -fx-padding: 10px; }
+.chart-plot-background { -fx-background-color: transparent; }
+.axis:bottom { -fx-border-color: transparent; }
+.axis:left { -fx-border-color: transparent; }
+.axis-label { -fx-text-fill: #ffffff; }
+.axis-tick-mark, .axis-minor-tick-mark { -fx-stroke: #ffffff; } 
+.axis { -fx-tick-label-fill: #ffffff; }
+.chart-legend { -fx-background-color: transparent; }
+.chart-legend-item { -fx-text-fill: #ffffff; }

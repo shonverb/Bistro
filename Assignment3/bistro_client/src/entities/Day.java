@@ -7,7 +7,7 @@ import java.sql.Time;
  * Represents a day of the week with opening and closing times.
  */
 public class Day implements Serializable{
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 3584305537514718664L;
 	private int day;
 	private Time open;
 	private Time close;

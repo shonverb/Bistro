@@ -6,13 +6,13 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import entities.Day;
-import entities.GetHoursDateRequest;
-import entities.GetHoursDayRequest;
-import entities.GetMaxTableRequest;
-import entities.ReserveRequest;
 import entities.SpecificDate;
 import entities.User;
 import entities.UserType;
+import entities.requests.GetHoursDateRequest;
+import entities.requests.GetHoursDayRequest;
+import entities.requests.GetMaxTableRequest;
+import entities.requests.ReserveRequest;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -209,13 +209,13 @@ public class OrderScreenController implements IController {
     @FXML
     void onBackClick(ActionEvent event) throws IOException {
     	if(user.getType() == UserType.GUEST) {
-            ClientUI.console.switchScreen(this, event, "/boundry/AppOrderManagementScreen.fxml", user);
+            ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/AppOrderManagementScreen.fxml", user);
     	}
     	else if(user.getType() == UserType.SUBSCRIBER) {
-    		ClientUI.console.switchScreen(this, event, "/boundry/AppOrderManagementScreen.fxml", user);
+    		ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/AppOrderManagementScreen.fxml", user);
     	}
     	else {
-    		ClientUI.console.switchScreen(this, event, "/boundry/WorkerScreen.fxml", user);
+    		ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/WorkerScreen.fxml", user);
     	}
     }
     

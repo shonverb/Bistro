@@ -3,12 +3,12 @@ package boundry;
 import java.io.IOException;
 
 import entities.Guest;
-import entities.LoginRequest;
 import entities.Manager;
 import entities.Subscriber;
 import entities.User;
 import entities.UserType;
 import entities.Worker;
+import entities.requests.LoginRequest;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -63,7 +63,7 @@ public class LoginScreenController implements IController{
     @FXML
     void onGuestTerminalClick(ActionEvent event) throws IOException {
     	this.user = new Guest(null, null,null);
-    	ClientUI.console.switchScreen(this, event, "/boundry/TerminalScreen.fxml", user);
+    	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/TerminalScreen.fxml", user);
     }
     
     /**
@@ -74,7 +74,7 @@ public class LoginScreenController implements IController{
     @FXML
     void onGuestAppClick(ActionEvent event) throws IOException {
     	this.user = new Guest(null, null,null);
-    	ClientUI.console.switchScreen(this, event, "/boundry/ClientScreen.fxml", user);
+    	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/ClientScreen.fxml", user);
     }
     
     /**
@@ -142,13 +142,13 @@ public class LoginScreenController implements IController{
 
                 String screen;
                 if (mode.equals("TERMINAL")) {
-                    screen = "/boundry/TerminalScreen.fxml";
+                    screen = "/boundry/fxml_files/TerminalScreen.fxml";
                 }
                 else {
                     if (user.getType() == UserType.BISTRO_REP || user.getType() == UserType.MANAGER) {
-                        screen = "/boundry/WorkerScreen.fxml";
+                        screen = "/boundry/fxml_files/WorkerScreen.fxml";
                     } else {
-                        screen = "/boundry/ClientScreen.fxml";
+                        screen = "/boundry/fxml_files/ClientScreen.fxml";
                     }
                 }
 
@@ -199,7 +199,7 @@ public class LoginScreenController implements IController{
 	 */
     public void start(Stage primaryStage) throws Exception {  // Method for starting the main screen
         // Load the main screen FXML into a Parent node
-        Parent root = FXMLLoader.load(getClass().getResource("/boundry/loginScreen.fxml"));
+        Parent root = FXMLLoader.load(getClass().getResource("/boundry/fxml_files/loginScreen.fxml"));
 
         Scene scene = new Scene(root);                        // Create the scene with the loaded layout
         primaryStage.setTitle("Bistro Order management tool"); // Set the window title

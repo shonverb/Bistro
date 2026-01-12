@@ -2,11 +2,12 @@ package boundry;
 
 import java.io.IOException;
 import java.util.Optional;
-import entities.CancelRequest;
-import entities.AlterWaitlistRequest;
-import entities.Request;
-import entities.RequestType;
+
 import entities.User;
+import entities.requests.AlterWaitlistRequest;
+import entities.requests.CancelRequest;
+import entities.requests.Request;
+import entities.requests.RequestType;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
@@ -111,7 +112,7 @@ public class queueWaitListController implements IController{
 	 */
     @FXML
     void onBackBtnClick(ActionEvent event) {
-		ClientUI.console.switchScreen(this, event, "/boundry/ClientScreen.fxml", user);
+		ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/ClientScreen.fxml", user);
 
     }
 

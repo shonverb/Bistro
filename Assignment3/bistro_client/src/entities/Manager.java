@@ -6,8 +6,8 @@ import java.util.List;
 /**
  * Manager class representing a manager user in the system.
  */
-public class Manager extends Worker implements Serializable {
-	private static final long serialVersionUID = 1L;
+public class Manager extends Worker implements Serializable{
+	private static final long serialVersionUID = -4707355705231161183L;
 	private int subscriberID;
 	private String userName;
 	private String firstName;

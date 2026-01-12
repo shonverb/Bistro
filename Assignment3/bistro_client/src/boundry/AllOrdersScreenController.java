@@ -1,7 +1,7 @@
 package boundry;
 
-import entities.GetAllActiveOrdersRequest;
 import entities.User;
+import entities.requests.GetAllActiveOrdersRequest;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -39,7 +39,7 @@ public class AllOrdersScreenController implements IController {
 	 */
     @FXML
     void onBackClick(ActionEvent event) {
-		ClientUI.console.switchScreen(this, event, "/boundry/WorkerScreen.fxml", user);
+		ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/WorkerScreen.fxml", user);
     }
 
 	/**

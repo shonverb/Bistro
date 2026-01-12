@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.text.Text?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="700.0" stylesheets="@styles.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="boundry.LoginScreenController">
+   <children>
+      <Text layoutX="50.0" layoutY="70.0" strokeType="OUTSIDE" strokeWidth="0.0" styleClass="title-text" text="Welcome to Bistro" />
+      <Text layoutX="52.0" layoutY="95.0" strokeType="OUTSIDE" strokeWidth="0.0" styleClass="label-light" text="Please identify yourself to continue" />
+
+      <Pane layoutX="175.0" layoutY="130.0" prefHeight="330.0" prefWidth="350.0" styleClass="card-pane">
+         <children>
+            <Label layoutX="30.0" layoutY="20.0" styleClass="card-title" text="Subscriber Login" />
+            <Label layoutX="30.0" layoutY="60.0" text="Subscriber ID (Password)" />
+            <TextField fx:id="subscriberId" layoutX="30.0" layoutY="85.0" prefWidth="290.0" promptText="Enter ID..." />
+            
+            <Button fx:id="terminalBtn" layoutX="30.0" layoutY="135.0" mnemonicParsing="false" onAction="#onTerminalClick" prefWidth="135.0" text="Terminal Login" />
+            <Button fx:id="appBtn" layoutX="185.0" layoutY="135.0" mnemonicParsing="false" onAction="#onAppClick" prefWidth="135.0" text="App Login" />
+            
+            <Separator layoutX="30.0" layoutY="190.0" prefWidth="290.0" />
+            <Label layoutX="155.0" layoutY="205.0" text="OR" textFill="#888888" />
+            
+            <Button fx:id="guestTerminalBtn" layoutX="30.0" layoutY="235.0" mnemonicParsing="false" onAction="#onGuestTerminalClick" prefWidth="290.0" styleClass="button-secondary" text="Guest (Terminal)" />
+            <Button fx:id="guestAppBtn" layoutX="30.0" layoutY="280.0" mnemonicParsing="false" onAction="#onGuestAppClick" prefWidth="290.0" styleClass="button-secondary" text="Guest (App)" />
+         </children>
+      </Pane>
+      <Button fx:id="exitBtn" layoutX="620.0" layoutY="30.0" mnemonicParsing="false" onAction="#onExitClick" styleClass="button-secondary-white" text="EXIT X" />
+   </children>
+</AnchorPane>

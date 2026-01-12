@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Text?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" stylesheets="@styles.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="boundry.mainScreenController">
+   <children>
+      <Text layoutX="50.0" layoutY="60.0" styleClass="title-text" text="Quick Actions" />
+      
+      <Pane layoutX="100.0" layoutY="100.0" prefHeight="200.0" prefWidth="400.0" styleClass="card-pane">
+         <children>
+            <VBox alignment="CENTER" layoutX="50.0" layoutY="30.0" spacing="20.0">
+               <Label styleClass="card-title" text="What do you want to do?" />
+               <Button fx:id="OrderBtn" mnemonicParsing="false" onAction="#onOrderClick" prefWidth="300.0" text="Order a Spot" />
+               <Button fx:id="viewBtn" mnemonicParsing="false" onAction="#onViewClick" prefWidth="300.0" styleClass="button-secondary" text="View Existing Order" />
+            </VBox>
+         </children>
+      </Pane>
+   </children>
+</AnchorPane>

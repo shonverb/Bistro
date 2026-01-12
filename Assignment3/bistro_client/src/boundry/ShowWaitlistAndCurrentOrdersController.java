@@ -2,9 +2,10 @@ package boundry;
 
 import java.io.IOException;
 import java.util.List;
-import entities.GetLiveStateRequest; // Import your new request
+
 import entities.User;
 import entities.UserType;
+import entities.requests.GetLiveStateRequest;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.event.ActionEvent;
@@ -63,7 +64,7 @@ public class ShowWaitlistAndCurrentOrdersController implements IController {
 	 */
     @FXML
     void onBackClick(ActionEvent event) throws IOException {
-        String path = "/boundry/WorkerScreen.fxml";
+        String path = "/boundry/fxml_files/WorkerScreen.fxml";
         ClientUI.console.switchScreen(this, event, path, user);
     }
 

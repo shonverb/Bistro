@@ -4,11 +4,11 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 
 import entities.User;
-import entities.WriteHoursDateRequest;
-import entities.AddTableRequest;
-import entities.ChangeHoursDayRequest;
-import entities.GetAllTablesRequest;
-import entities.RemoveTableRequest;
+import entities.requests.AddTableRequest;
+import entities.requests.ChangeHoursDayRequest;
+import entities.requests.GetAllTablesRequest;
+import entities.requests.RemoveTableRequest;
+import entities.requests.WriteHoursDateRequest;
 import entities.Table;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -195,7 +195,7 @@ public class BistroManagementScreenController implements IController{
 				Table selectedTable = currentTables.getValue();
 				if(selectedTable != null) {
 					int newCapacity = Integer.parseInt(setTableCapText.getText());
-					ClientUI.console.accept(new entities.UpdateTableCapacityRequest(selectedTable.getId(), newCapacity));
+					ClientUI.console.accept(new entities.requests.UpdateTableCapacityRequest(selectedTable.getId(), newCapacity));
 					setTableCapText.clear();
 				} else {
 					Alert alert = new Alert(AlertType.ERROR);
@@ -223,7 +223,7 @@ public class BistroManagementScreenController implements IController{
 	 */
 	@FXML
 	void onBackBtnClick(ActionEvent event) {
-		ClientUI.console.switchScreen(this, event, "/boundry/WorkerScreen.fxml", user);
+		ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/WorkerScreen.fxml", user);
 	}
 
 	/**

@@ -1,7 +1,7 @@
 package boundry;
 
-import entities.GetAllSubscribersRequest;
 import entities.User;
+import entities.requests.GetAllSubscribersRequest;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -38,7 +38,7 @@ public class SubscriberInfoController implements IController {
 	 */
     @FXML
     void onBackBtnClick(ActionEvent event) {
-    	ClientUI.console.switchScreen(this, event, "/boundry/WorkerScreen.fxml", user);
+    	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/WorkerScreen.fxml", user);
     }
 
     /**

@@ -1,9 +1,9 @@
 package boundry;
 
-import entities.OrderHistoryRequest;
 import entities.Subscriber;
 import entities.User;
 import entities.UserType;
+import entities.requests.OrderHistoryRequest;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -37,10 +37,10 @@ public class HistoryScreenController implements IController {
     @FXML
     void onBackClick(ActionEvent event) {
 		if(user.getType()==UserType.SUBSCRIBER) {
-			ClientUI.console.switchScreen(this, event, "/boundry/ClientScreen.fxml", user);
+			ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/ClientScreen.fxml", user);
 		}
 		else {
-			ClientUI.console.switchScreen(this, event, "/boundry/WorkerScreen.fxml", user);
+			ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/WorkerScreen.fxml", user);
 		}
     }
     

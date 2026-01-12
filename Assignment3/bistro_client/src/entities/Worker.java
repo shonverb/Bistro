@@ -8,7 +8,7 @@ import java.util.List;
  * from Subscriber and implements Serializable for object serialization.
  */
 public class Worker extends Subscriber implements Serializable {
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 558341385970885494L;
 	private int subscriberID;
 	private String userName;
 	private String firstName;
