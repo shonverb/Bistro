@@ -42,29 +42,10 @@ import entities.Day;
  * A class that handles all operations on the database, receiving requests and handling them 
  * */
 public class DBconnector {
-	/**The connection to the Database*/
-    //private Connection conn;
     
     DateTimeFormatter f = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
  
-    /**
-     * Constructor, initiating the connection and fields
-     * */
     public DBconnector(){
-        //try //connect DB
-        //{
-
-
-        	//conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/bistro?allowLoadLocalInfile=true&serverTimezone=Asia/Jerusalem&useSSL=false", "root", "Hodvak123!");
-
-            //System.out.println("SQL connection succeeded");
-
-        //} catch (SQLException ex) {
-        //ex.printStackTrace();
-        //    System.exit(1);
-        //}
-
-
     }
     
 	/**
@@ -78,8 +59,8 @@ public class DBconnector {
     	Connection conn = ConnectionPool.getInstance().getConnection();
     	try (PreparedStatement stmt = conn.prepareStatement(r.getQuery())) {
     		stmt.setString(1, req.getcontact());
-    		stmt.setTimestamp(2, Timestamp.valueOf(BistroServer.dateTime));
-    		stmt.setTimestamp(3, Timestamp.valueOf(BistroServer.dateTime));
+    		//stmt.setTimestamp(2, Timestamp.valueOf(BistroServer.dateTime));
+    		//stmt.setTimestamp(3, Timestamp.valueOf(BistroServer.dateTime));
 			ResultSet rs = stmt.executeQuery();
 			while (rs.next()) {
 				res+=rs.getString(1)+"\n";
@@ -203,9 +184,6 @@ public class DBconnector {
     }
 
 
-    /* ================= READ ORDER =================
-       Make sure your ReadRequest SELECT uses order_datetime as the 2nd column.
-    */
     
 	/**
 	 * the method gets an order from the database
@@ -245,7 +223,6 @@ public class DBconnector {
         return result;
     }
 
-    /* ================= READ EMAIL ================= */
     
 	/**
 	 * the method reads the email of a subscriber from the database
@@ -1109,12 +1086,10 @@ public class DBconnector {
 	             while (rs.next()) {
 	                 int startH = rs.getInt("start_h");
 	                 int endH = rs.getInt("end_h");
-	                 // Logic: If I waited from 12:15 to 12:45, I was waiting during hour 12.
 	                 if (startH == endH) {
 	                     hourlyCounts[startH]++;
 	                 }
 	                 else {
-	                     // If I waited from 19:50 to 20:10, I waited both in hour 19 and hour 20.
 	                     for (int h = startH; h <= endH; h++) {
 	                         if (h >= 0 && h < 24) {
 	                             hourlyCounts[h]++;
@@ -1139,7 +1114,13 @@ public class DBconnector {
 
 	    return allData;
 	}
-
+	
+	
+	/**
+	 * Sets an order type to the type given
+	 * @param orderNum the order number to set the type to
+	 * @param type the type to set the order to
+	 * */
 	public void setOrderType(String orderNum,String type) {
     	Connection conn = ConnectionPool.getInstance().getConnection();
 		String query = "UPDATE `order` SET type_of_order = ? WHERE order_number = ? AND type_of_order IS NULL;";

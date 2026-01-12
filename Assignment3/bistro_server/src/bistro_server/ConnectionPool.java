@@ -5,11 +5,17 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-
+/**
+ * A class that manages connections to the database
+ */
 public class ConnectionPool {
-
+	/**
+	 * instance for the singleton pattern
+	 */
     private static ConnectionPool instance;
+    /** A queue that blocks a thread that takes from it if it is empty*/
     private BlockingQueue<Connection> pool;
+    /** the size of the pool (the queue)*/
     private final int MAX_POOL_SIZE = 10;
     
 	//conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/bistro", "root", "");
@@ -17,9 +23,9 @@ public class ConnectionPool {
     // Database credentials
     private final String DB_URL = "jdbc:mysql://localhost:3306/bistro";
     private final String USER = "root"; 
-    private final String PASS = "123456789";
+    private final String PASS = "";
 
-    // Private constructor (Singleton Pattern)
+    /** Private constructor (Singleton Pattern)*/
     private ConnectionPool() {
         pool = new ArrayBlockingQueue<>(MAX_POOL_SIZE);
         try {
@@ -33,14 +39,21 @@ public class ConnectionPool {
             e.printStackTrace();
         }
     }
-
+    /**
+     * the method creates the connection pool or returns the existing instance
+     * @return the ConnectionPool's instance
+     * */
     public static synchronized ConnectionPool getInstance() {
         if (instance == null) {
             instance = new ConnectionPool();
         }
         return instance;
     }
-
+    /**
+     * a method that creates a connection to the database
+     * @return a new connection to the database
+     * @throws SQLException
+     * */
     private Connection createNewConnection() throws SQLException {
         return DriverManager.getConnection(DB_URL, USER, PASS);
     }
@@ -50,7 +63,6 @@ public class ConnectionPool {
      */
     public Connection getConnection() {
         try {
-            // .take() blocks the thread until a connection is available
             return pool.take();
         } catch (InterruptedException e) {
             e.printStackTrace();

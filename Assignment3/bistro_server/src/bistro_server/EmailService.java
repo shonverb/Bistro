@@ -4,11 +4,20 @@ import java.io.UnsupportedEncodingException;
 import java.util.Properties;
 import javax.mail.*;
 import javax.mail.internet.*;
-
+/**A class that manages sending emails to clients*/
 public class EmailService {
-
+	/**The email that sends the messages*/
 	private final String username = System.getenv("BISTRO_EMAIL_USER");
+	
+	/**the password to the email that sends the messages*/
     private final String password = System.getenv("BISTRO_EMAIL_PASS");
+    
+    /**
+     * A method that sends a message to the recipient
+     * @param recipient the email to send the message to
+     * @param subject the message's subject
+     * @param content the message's content
+     * */
     public void sendEmail(String recipient, String subject, String content) {
         Properties prop = new Properties();
         prop.put("mail.smtp.host", "smtp.gmail.com"); 
