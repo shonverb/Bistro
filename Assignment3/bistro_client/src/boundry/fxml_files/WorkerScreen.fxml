@@ -17,7 +17,7 @@
             <Label styleClass="label-light" text="ORDERS &amp; TABLES" />
             <Button fx:id="orderBtn" mnemonicParsing="false" onAction="#onNewOrderBtn" prefWidth="200.0" text="Operate As Client" />
             <Button fx:id="orderDetailsBtn" mnemonicParsing="false" onAction="#onOrderDetailsClick" prefWidth="200.0" styleClass="button-secondary-white" text="View Order Details" />
-            <Button fx:id="waitingListBtn" mnemonicParsing="false" onAction="#onWaitingListClick" prefWidth="200.0" styleClass="button-secondary-white" text="Waiting List" />
+            <Button fx:id="waitingListBtn" mnemonicParsing="false" onAction="#onWaitingListClick" prefWidth="200.0" styleClass="button-secondary-white" text="Current Bistro State" />
             <Button fx:id="historyBtn" mnemonicParsing="false" onAction="#onHistoryBtnClick" prefWidth="200.0" styleClass="button-secondary-white" text="Order History" />
          </children>
       </VBox>

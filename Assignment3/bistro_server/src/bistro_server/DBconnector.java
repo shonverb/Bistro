@@ -365,7 +365,7 @@ public class DBconnector {
 	 * 
 	 * @return A list of relevant tables
 	 */
-	public HashMap<Table, Order> getRelevantTables() {
+	public HashMap<Table, Order> getCurrentBistroState() {
 		Connection conn = ConnectionPool.getInstance().getConnection();
 		HashMap<Table, Order> currentBistro= new HashMap<>();
 		try {
@@ -382,17 +382,25 @@ public class DBconnector {
 					try {
 						PreparedStatement stmt2 = conn.prepareStatement(
 								"SELECT * FROM `order` WHERE order_number = ?;");
-						stmt2.setDate(1, Date.valueOf(LocalDate.now()));
+						stmt2.setInt(1, currentOrder);
 						ResultSet rs2 = stmt2.executeQuery();
 						ArrayList<String> order = new ArrayList<>();
-						order.add(rs.getString("order_number"));
-						order.add(rs.getString("order_datetime"));
-						order.add(rs.getString("number_of_guests"));
-						order.add(rs.getString("confirmation_code"));
-						order.add(rs.getString("subscriber_id"));
-						order.add(rs.getString("date_of_placing_order"));
-						order.add(rs.getString("contact"));
-						currentBistro.put(new Table(id, capacity,true) , new Order(order,0));
+						LocalDateTime orderSittingTime = null;
+						if(rs2.next()) {
+							order.add(rs2.getString("order_number"));
+							order.add(rs2.getString("order_datetime"));
+							order.add(rs2.getString("number_of_guests"));
+							order.add(rs2.getString("confirmation_code"));
+							order.add(rs2.getString("subscriber_id"));
+							order.add(rs2.getString("date_of_placing_order"));
+							order.add(rs2.getString("contact"));
+							orderSittingTime = rs2.getObject("seated_time", LocalDateTime.class);
+
+						}
+						Order o = new Order(order,0);
+						o.setSittingtime(orderSittingTime);
+						System.out.println(order);
+						currentBistro.put(new Table(id, capacity,true) , o);
 					}
 					catch (SQLException e) {
 						e.printStackTrace();

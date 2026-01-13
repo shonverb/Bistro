@@ -64,7 +64,7 @@ public class BistroServer extends AbstractServer {
         currentBistro = new HashMap<>();
         dbcon = new DBconnector();
         clients = Collections.synchronizedList(new ArrayList<>());
-        currentBistro = dbcon.getRelevantTables();
+        currentBistro = dbcon.getCurrentBistroState();
 //        for (Table t : tables) {
 //			currentBistro.put(new Table(t.getId(), t.getCapacity(), t.isTaken()), null);
 //		}
@@ -615,6 +615,7 @@ public class BistroServer extends AbstractServer {
 		String confcode = req.getConfCode();
 		for (Entry<Table, Order> entry : currentBistro.entrySet()) {
 			Order order = entry.getValue();
+			System.out.println(order.getSittingtime());
 			if (order != null && order.getConfirmationCode().equals(confcode)&& order.getSittingtime()!=null) {
 				currentBistro.put(entry.getKey(), null);
 				entry.getKey().setTaken(false);
