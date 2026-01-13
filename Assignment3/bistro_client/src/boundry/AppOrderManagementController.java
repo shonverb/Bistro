@@ -105,13 +105,18 @@ public class AppOrderManagementController implements IController {
     	}
     }
     
-    
+	/**
+	 * Handles the action when the "Lost My Code" button is clicked. Prompts the
+	 * user for contact information and sends a request to check the confirmation code.
+	 * 
+	 * @param event The action event triggered by clicking the "Lost My Code" button.
+	 */
     @FXML
     void onLostMyCodeClick(ActionEvent event) {
 
         String contact;
 
-        // ---------- GUEST ----------
+        //GUEST
         if (user.getType() == UserType.GUEST) {
 
             TextField contactField = new TextField();
@@ -134,7 +139,7 @@ public class AppOrderManagementController implements IController {
 
             Optional<String> result = dialog.showAndWait();
 
-            // user cancelled popup
+            //user cancelled pop-up
             if (result.isEmpty()) return;
 
             contact = result.get().trim();
@@ -152,16 +157,13 @@ public class AppOrderManagementController implements IController {
             }
         }
 
-        // ---------- SUBSCRIBER ----------
+        //SUBSCRIBER
         else {
             contact = user.getEmail();
         }
 
-        // ---------- SEND REQUEST ----------
         ClientUI.console.accept(new CheckConfCodeRequest(contact));
-    }
-    
-    
+    }   
     
     /**
      * Handles the action when the finish order button is clicked.
