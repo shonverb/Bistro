@@ -20,6 +20,7 @@ public class Order implements Serializable{
     private String subscriberId;        // "0" means guest
     private String dateOfPlacingOrder;  // yyyy-MM-dd
     private String contact;             // phone/email or subscriber email
+    private String status;
     
     /** Sitting time for the order */
     private LocalDateTime sittingtime;
@@ -85,5 +86,11 @@ public class Order implements Serializable{
 						"Number Of Guests= " + numberOfGuests + '\n' +
 						"Subscriber Id= " + subscriberId + '\n' +
 						"Contact= " + contact + '\n';
+    }
+    public void setStatus(String status) {
+    	this.status = status;
+    }
+    public String getStatus() {
+    	return status;
     }
 }

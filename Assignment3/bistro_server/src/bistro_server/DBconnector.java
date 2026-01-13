@@ -23,6 +23,8 @@ import entities.SpecificDate;
 import entities.Order;
 import entities.Subscriber;
 import entities.Table;
+import entities.User;
+import entities.Worker;
 import entities.requests.AddTableRequest;
 import entities.requests.CancelRequest;
 import entities.requests.ChangeHoursDayRequest;
@@ -37,6 +39,7 @@ import entities.requests.Request;
 import entities.requests.ShowTakenSlotsRequest;
 import entities.requests.WriteHoursDateRequest;
 import entities.Day;
+import entities.Manager;
 
 /**
  * A class that handles all operations on the database, receiving requests and
@@ -367,7 +370,7 @@ public class DBconnector {
 	 */
 	public HashMap<Table, Order> getCurrentBistroState() {
 		Connection conn = ConnectionPool.getInstance().getConnection();
-		HashMap<Table, Order> currentBistro= new HashMap<>();
+		HashMap<Table, Order> currentBistro = new HashMap<>();
 		try {
 			PreparedStatement stmt = conn.prepareStatement(
 					"SELECT * FROM `table` WHERE ? >= active_from AND (? <= active_to OR active_to IS NULL);");
@@ -380,13 +383,13 @@ public class DBconnector {
 				int currentOrder = rs.getInt("current_order");
 				if (currentOrder != 0) {
 					try {
-						PreparedStatement stmt2 = conn.prepareStatement(
-								"SELECT * FROM `order` WHERE order_number = ?;");
+						PreparedStatement stmt2 = conn
+								.prepareStatement("SELECT * FROM `order` WHERE order_number = ?;");
 						stmt2.setInt(1, currentOrder);
 						ResultSet rs2 = stmt2.executeQuery();
 						ArrayList<String> order = new ArrayList<>();
 						LocalDateTime orderSittingTime = null;
-						if(rs2.next()) {
+						if (rs2.next()) {
 							order.add(rs2.getString("order_number"));
 							order.add(rs2.getString("order_datetime"));
 							order.add(rs2.getString("number_of_guests"));
@@ -397,20 +400,19 @@ public class DBconnector {
 							orderSittingTime = rs2.getObject("seated_time", LocalDateTime.class);
 
 						}
-						Order o = new Order(order,0);
+						Order o = new Order(order, 0);
 						o.setSittingtime(orderSittingTime);
 						System.out.println(order);
-						currentBistro.put(new Table(id, capacity,true) , o);
-					}
-					catch (SQLException e) {
+						currentBistro.put(new Table(id, capacity, true), o);
+					} catch (SQLException e) {
 						e.printStackTrace();
 						ConnectionPool.getInstance().returnConnection(conn);
 					}
-					
+
 				} else {
-					currentBistro.put(new Table(id, capacity,false) , null);
+					currentBistro.put(new Table(id, capacity, false), null);
 				}
-				
+
 			}
 			return currentBistro;
 		} catch (SQLException e) {
@@ -451,31 +453,33 @@ public class DBconnector {
 	 * the method gets the order history from the database
 	 * 
 	 * @param r A Request containing the select query
-	 * @return The resulting string, a message to the user
+	 * @return The resulting ArrayList, a message to the user
 	 */
-	public String getOrderHistory(Request r) {
+	public List<Order> getOrderHistory(Request r) {
 		Connection conn = ConnectionPool.getInstance().getConnection();
 		String query = r.getQuery();
-		String result = "";
+		List<Order> result = new ArrayList<>();
 		try {
 			PreparedStatement stmt = conn.prepareStatement(query);
 			ResultSet rs = stmt.executeQuery();
 
-			if (!rs.next())
-				return "No order history found.";
-
-			do {
-				result += "Order Number: " + rs.getString("order_number") + ", ";
-				result += "Order DateTime: " + rs.getString("order_datetime") + ", ";
-				result += "Guests: " + rs.getString("number_of_guests") + ", ";
-				result += "Confirmation Code: " + rs.getString("confirmation_code") + ", ";
-				result += "Placed On: " + rs.getString("date_of_placing_order") + ", ";
-				result += "Status: " + rs.getString("status") + "\n";
-			} while (rs.next());
+			while (rs.next()) {
+				ArrayList<String> args = new ArrayList<>();
+				args.add(rs.getString("order_number"));
+				args.add(rs.getString("order_datetime"));
+				args.add(rs.getString("number_of_guests"));
+				args.add(rs.getString("confirmation_code"));
+				args.add(rs.getString("subscriber_id"));
+				args.add(rs.getString("date_of_placing_order"));
+				args.add(rs.getString("contact"));
+				Order o = new Order(args,1);
+				o.setStatus(rs.getString("status"));
+				result.add(o);
+			}
 
 		} catch (SQLException e) {
 			e.printStackTrace();
-			return "❌ Error retrieving order history.";
+			return new ArrayList<>();
 		} finally {
 			ConnectionPool.getInstance().returnConnection(conn);
 		}
@@ -487,33 +491,32 @@ public class DBconnector {
 	 * the method gets all active orders from the database
 	 * 
 	 * @param r A Request containing the select query
-	 * @return The resulting string, a message to the user
+	 * @return The resulting Order List, a message to the user
 	 */
-	public String getAllActiveOrders(Request r) {
+	public List<Order> getAllActiveOrders(Request r) {
 		Connection conn = ConnectionPool.getInstance().getConnection();
 		String query = r.getQuery();
-		String result = "";
+		List<Order> result = new ArrayList<>();
 		try {
 			PreparedStatement stmt = conn.prepareStatement(query);
 			ResultSet rs = stmt.executeQuery();
-
-			if (!rs.next())
-				return "No active orders found.";
-
-			do {
-				result += "Order Number: " + rs.getString("order_number") + ", ";
-				result += "Order DateTime: " + rs.getString("order_datetime") + ", ";
-				result += "Guests: " + rs.getString("number_of_guests") + ", ";
-				result += "Confirmation Code: " + rs.getString("confirmation_code") + ", ";
-				result += "Subscriber ID: " + rs.getString("subscriber_id") + ", ";
-				result += "Placed On: " + rs.getString("date_of_placing_order") + ", ";
-				result += "Contact: " + rs.getString("contact") + ", ";
-				result += "Status: " + rs.getString("status") + "\n";
-			} while (rs.next());
+			while (rs.next()) {
+				ArrayList<String> args = new ArrayList<>();
+				args.add(rs.getString("order_number"));
+				args.add(rs.getString("order_datetime"));
+				args.add(rs.getString("number_of_guests"));
+				args.add(rs.getString("confirmation_code"));
+				args.add(rs.getString("subscriber_id"));
+				args.add(rs.getString("date_of_placing_order"));
+				args.add(rs.getString("contact"));
+				Order o = new Order(args,1);
+				o.setStatus(rs.getString("status"));
+				result.add(o);
+			}
 
 		} catch (SQLException e) {
 			e.printStackTrace();
-			return "❌ Error retrieving active orders.";
+			return new ArrayList<>();
 		} finally {
 			ConnectionPool.getInstance().returnConnection(conn);
 		}
@@ -527,28 +530,27 @@ public class DBconnector {
 	 * @param r A Request containing the select query
 	 * @return The resulting string, a message to the user
 	 */
-	public String getAllSubscribers(Request r) {
+	public List<User> getAllSubscribers(Request r) {
 		Connection conn = ConnectionPool.getInstance().getConnection();
 		String query = r.getQuery();
-		String result = "";
+		List<User> result = new ArrayList<>();
 		try {
 			PreparedStatement stmt = conn.prepareStatement(query);
 			ResultSet rs = stmt.executeQuery();
 
-			if (!rs.next())
-				return "No subscribers found.";
 
-			do {
-				result += "Subscriber ID: " + rs.getString("subscriber_id") + ", ";
-				result += "Name: " + rs.getString("full_name") + ", ";
-				result += "Username: " + rs.getString("username") + ", ";
-				result += "Phone: " + rs.getString("phone_number") + ", ";
-				result += "Email: " + rs.getString("email") + "\n";
-			} while (rs.next());
+			while (rs.next()) {
+				User cur;
+				cur = new Subscriber(rs.getInt("subscriber_id"), rs.getString("username"),
+							rs.getString("full_name").split(" ")[0], rs.getString("full_name").split(" ")[1],
+							rs.getString("phone_number"), rs.getString("email"), rs.getString("status"), null);
+				
+				result.add(cur);
+			}
 
 		} catch (SQLException e) {
 			e.printStackTrace();
-			return "❌ Error retrieving subscribers.";
+			return new ArrayList<>();
 		} finally {
 			ConnectionPool.getInstance().returnConnection(conn);
 		}
@@ -1172,43 +1174,39 @@ public class DBconnector {
 			stmt.setString(1, OrderType);
 			ResultSet rs = stmt.executeQuery();
 			while (rs.next()) {
-				sb.append(rs.getString("order_number")).
-				append(",").append(rs.getString("order_datetime")).append(",").
-				append(rs.getString("number_of_guests")).append(",").
-				append(rs.getString("confirmation_code")).append(",").
-				append(rs.getString("subscriber_id")).append(",").
-				append(rs.getString("date_of_placing_order")).append(",").
-				append(rs.getString("contact")).append("\n");
+				sb.append(rs.getString("order_number")).append(",").append(rs.getString("order_datetime")).append(",")
+						.append(rs.getString("number_of_guests")).append(",").append(rs.getString("confirmation_code"))
+						.append(",").append(rs.getString("subscriber_id")).append(",")
+						.append(rs.getString("date_of_placing_order")).append(",").append(rs.getString("contact"))
+						.append("\n");
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
 			ConnectionPool.getInstance().returnConnection(conn);
 		}
-		
-		return sb.isEmpty()? "" : sb.toString();
+
+		return sb.isEmpty() ? "" : sb.toString();
 	}
-	
+
 	public void putOrderToTable(String orderNum, int tableNum, boolean wantToSit) {
 		Connection conn = ConnectionPool.getInstance().getConnection();
 		String query;
 		if (wantToSit) {
 			query = "UPDATE `table` SET current_order = ? WHERE table_number = ?;";
-		}
-		else {
+		} else {
 			query = "UPDATE `table` SET current_order = NULL WHERE table_number = ?;";
 		}
-		
+
 		try {
 			PreparedStatement stmt = conn.prepareStatement(query);
 			if (wantToSit) {
-				stmt.setInt(1, Integer.parseInt(orderNum));		
+				stmt.setInt(1, Integer.parseInt(orderNum));
 				stmt.setInt(2, tableNum);
-			}
-			else {
+			} else {
 				stmt.setInt(1, tableNum);
 			}
-			
+
 			stmt.executeUpdate();
 		} catch (SQLException e) {
 			e.printStackTrace();
