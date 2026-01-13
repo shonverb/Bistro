@@ -66,6 +66,12 @@ public class WorkerScreenController implements IController {
     	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/BistroManagementScreen.fxml", user);
     }
     
+	/**
+	 * Handles the click event for the Orders History button. Navigates to the
+	 * History screen.
+	 * 
+	 * @param event The action event triggered by the button click.
+	 */
     @FXML
     void onHistoryBtnClick(ActionEvent event) {
     	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/HistoryScreen.fxml", user);

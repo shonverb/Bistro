@@ -100,9 +100,32 @@ public class BistroServer extends AbstractServer {
         handlers.put(RequestType.GET_MAX_TABLE, this::getMaxTable);
         
         ConnectionPool.getInstance();
+        initWaitingLists();
     }
     
-    /**
+    private void initWaitingLists() {
+    	String waitingOrders = dbcon.getWaitingOrders("ON_THE_SPOT");
+    	if(!waitingOrders.equals("")) {
+    		String[] onTheSpot = waitingOrders.split("\n");
+    		for(String order : onTheSpot) {
+    			System.out.println(order);
+    			Order o = new Order(Arrays.asList(order.split(",")),1);
+    			waitlistJustArrived.enqueue(o);
+    		}
+    	}
+    	waitingOrders = dbcon.getWaitingOrders("IN_ADVANCE");
+    	if(!waitingOrders.equals("")) {
+    		String[] inAdvance = waitingOrders.split("\n");
+    		for(String order : inAdvance) {
+    			Order o = new Order(Arrays.asList(order.split(",")),1);
+    			waitlistOrderedInAdvance.enqueue(o);
+    		}
+		
+    	}
+    }
+    
+    
+	/**
      * Sending messages from client over to the database connector
      */
     @Override

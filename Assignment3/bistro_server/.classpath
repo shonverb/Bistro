@@ -13,8 +13,12 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
+<<<<<<< HEAD
 	<classpathentry kind="lib" path="C:/Users/refae/Downloads/mysql-connector-j-9.5.0/mysql-connector-j-9.5.0/mysql-connector-j-9.5.0.jar"/>
 	<classpathentry kind="lib" path="C:/Users/refae/Downloads/javax.mail.jar"/>
 	<classpathentry kind="lib" path="C:/Users/refae/Downloads/activation-1.1.1.jar"/>
+=======
+	<classpathentry kind="lib" path="C:/Users/user/Downloads/mysql-connector-j-9.5.0/mysql-connector-j-9.5.0/mysql-connector-j-9.5.0.jar"/>
+>>>>>>> branch 'dev' of https://github.com/RefaelBitton/Bistro.git
 	<classpathentry kind="output" path="bin"/>
 </classpath>

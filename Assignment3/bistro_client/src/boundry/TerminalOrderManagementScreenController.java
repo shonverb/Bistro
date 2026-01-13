@@ -111,19 +111,21 @@ public class TerminalOrderManagementScreenController implements IController {
     @FXML
     void onbackClick(ActionEvent event) {
 			ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/TerminalScreen.fxml", user);
-		}
+    }
 	
-    /**
-	 * Handles the action when the cancel order button is clicked.
-	 * Validates input and sends a cancel request if confirmed.
-	 * @param event The action event triggered by clicking the cancel order button.
+	/**
+	 * Handles the action when the "Lost My Code" button is clicked. Prompts the
+	 * user for contact information if not logged in, validates the input, and sends
+	 * a request to check the confirmation code.
+	 * 
+	 * @param event The action event triggered by clicking the button.
 	 */
     @FXML
     void onLostMyCodeClick(ActionEvent event) {
 
         String contact;
 
-        // ---------- GUEST ----------
+        //GUEST
         if (!isLoggedIn.get()) {
 
             TextField contactField = new TextField();
@@ -146,7 +148,7 @@ public class TerminalOrderManagementScreenController implements IController {
 
             Optional<String> result = dialog.showAndWait();
 
-            // user cancelled popup
+            //user cancelled pop-up
             if (result.isEmpty()) return;
 
             contact = result.get().trim();
@@ -164,12 +166,11 @@ public class TerminalOrderManagementScreenController implements IController {
             }
         }
 
-        // ---------- SUBSCRIBER ----------
+        //SUBSCRIBER
         else {
             contact = user.getEmail();
         }
-
-        // ---------- SEND REQUEST ----------
+        
         ClientUI.console.accept(new CheckConfCodeRequest(contact));
     }
 

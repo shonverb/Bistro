@@ -18,7 +18,6 @@ public class SortedWaitingList extends WaitingList {
 	@Override
 	public void enqueue(Order o) {
 	    WaitlistNode newNode = new WaitlistNode(o);
-
 	    LocalDateTime newDt = LocalDateTime.parse(o.getOrderDateTime(),BistroServer.DT_FMT);
 
 	    if (head == null) {
