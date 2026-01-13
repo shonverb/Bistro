@@ -127,6 +127,7 @@ public class BistroMonitor implements Runnable {
 	            		Table table=tableEntry.getKey();
 	            		table.setTaken(false);
 	            		currentBistro.put(table, null);
+	    	        	server.dbcon.putOrderToTable(order.getOrderNumber(), table.getId(), false);
 	            		break;
 	            	}
 	            }
@@ -264,6 +265,7 @@ public class BistroMonitor implements Runnable {
         			System.out.println("Found desired table with ID: " + t.getId());	
 					currentBistro.put(t, order); // Seat at the first available table
 					t.setTaken(true);
+					server.dbcon.putOrderToTable(order.getOrderNumber(), t.getId(), true);
 					pending.put(order, BistroServer.dateTime);
 					break;
 				}
