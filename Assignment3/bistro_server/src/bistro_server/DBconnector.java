@@ -365,9 +365,9 @@ public class DBconnector {
 	 * 
 	 * @return A list of relevant tables
 	 */
-	public List<Table> getRelevantTables() {
+	public HashMap<Table, Order> getCurrentBistroState() {
 		Connection conn = ConnectionPool.getInstance().getConnection();
-		ArrayList<Table> tables = new ArrayList<>();
+		HashMap<Table, Order> currentBistro= new HashMap<>();
 		try {
 			PreparedStatement stmt = conn.prepareStatement(
 					"SELECT * FROM `table` WHERE ? >= active_from AND (? <= active_to OR active_to IS NULL);");
@@ -377,9 +377,42 @@ public class DBconnector {
 			while (rs.next()) {
 				int id = rs.getInt("table_number");
 				int capacity = rs.getInt("number_of_seats");
-				tables.add(new Table(id, capacity, false));
+				int currentOrder = rs.getInt("current_order");
+				if (currentOrder != 0) {
+					try {
+						PreparedStatement stmt2 = conn.prepareStatement(
+								"SELECT * FROM `order` WHERE order_number = ?;");
+						stmt2.setInt(1, currentOrder);
+						ResultSet rs2 = stmt2.executeQuery();
+						ArrayList<String> order = new ArrayList<>();
+						LocalDateTime orderSittingTime = null;
+						if(rs2.next()) {
+							order.add(rs2.getString("order_number"));
+							order.add(rs2.getString("order_datetime"));
+							order.add(rs2.getString("number_of_guests"));
+							order.add(rs2.getString("confirmation_code"));
+							order.add(rs2.getString("subscriber_id"));
+							order.add(rs2.getString("date_of_placing_order"));
+							order.add(rs2.getString("contact"));
+							orderSittingTime = rs2.getObject("seated_time", LocalDateTime.class);
+
+						}
+						Order o = new Order(order,0);
+						o.setSittingtime(orderSittingTime);
+						System.out.println(order);
+						currentBistro.put(new Table(id, capacity,true) , o);
+					}
+					catch (SQLException e) {
+						e.printStackTrace();
+						ConnectionPool.getInstance().returnConnection(conn);
+					}
+					
+				} else {
+					currentBistro.put(new Table(id, capacity,false) , null);
+				}
+				
 			}
-			return tables;
+			return currentBistro;
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
@@ -1154,6 +1187,34 @@ public class DBconnector {
 		}
 		
 		return sb.isEmpty()? "" : sb.toString();
+	}
+	
+	public void putOrderToTable(String orderNum, int tableNum, boolean wantToSit) {
+		Connection conn = ConnectionPool.getInstance().getConnection();
+		String query;
+		if (wantToSit) {
+			query = "UPDATE `table` SET current_order = ? WHERE table_number = ?;";
+		}
+		else {
+			query = "UPDATE `table` SET current_order = NULL WHERE table_number = ?;";
+		}
+		
+		try {
+			PreparedStatement stmt = conn.prepareStatement(query);
+			if (wantToSit) {
+				stmt.setInt(1, Integer.parseInt(orderNum));		
+				stmt.setInt(2, tableNum);
+			}
+			else {
+				stmt.setInt(1, tableNum);
+			}
+			
+			stmt.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			ConnectionPool.getInstance().returnConnection(conn);
+		}
 	}
 
 }

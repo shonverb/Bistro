@@ -64,10 +64,10 @@ public class BistroServer extends AbstractServer {
         currentBistro = new HashMap<>();
         dbcon = new DBconnector();
         clients = Collections.synchronizedList(new ArrayList<>());
-        tables = dbcon.getRelevantTables();
-        for (Table t : tables) {
-			currentBistro.put(new Table(t.getId(), t.getCapacity(), t.isTaken()), null);
-		}
+        currentBistro = dbcon.getCurrentBistroState();
+//        for (Table t : tables) {
+//			currentBistro.put(new Table(t.getId(), t.getCapacity(), t.isTaken()), null);
+//		}
         tables = dbcon.getAllTables();
         handlers = new HashMap<>();
         handlers.put(RequestType.WRITE_ORDER, this::addNewOrder);
@@ -305,6 +305,7 @@ public class BistroServer extends AbstractServer {
         	currentBistro.put(desiredTable, waitlistOrder); // Seat at the first available table
 
         	desiredTable.setTaken(true);
+        	dbcon.putOrderToTable(waitlistOrder.getOrderNumber(), desiredTable.getId(), true);
         	dbcon.markArrivalAtTerminal(waitlistOrder.getOrderNumber());
 			dbcon.markOrderAsSeated(waitlistOrder.getOrderNumber());
 			dbcon.setOrderType(waitlistOrder.getOrderNumber(),"ON_THE_SPOT");
@@ -586,7 +587,7 @@ public class BistroServer extends AbstractServer {
         			System.out.println("Setting sitting time to current Bistro time: " + BistroServer.dateTime.toString() + "To order number "+ o.getOrderNumber());
 					currentBistro.put(t, o); // Seat at the first available table
 					t.setTaken(true);
-				
+					dbcon.putOrderToTable(o.getOrderNumber(), desiredTable.getId(), true);
 					dbcon.markOrderAsSeated(o.getOrderNumber());
 					break;
 				}
@@ -614,9 +615,11 @@ public class BistroServer extends AbstractServer {
 		String confcode = req.getConfCode();
 		for (Entry<Table, Order> entry : currentBistro.entrySet()) {
 			Order order = entry.getValue();
+			System.out.println(order.getSittingtime());
 			if (order != null && order.getConfirmationCode().equals(confcode)&& order.getSittingtime()!=null) {
 				currentBistro.put(entry.getKey(), null);
 				entry.getKey().setTaken(false);
+	        	dbcon.putOrderToTable(order.getOrderNumber(), entry.getKey().getId(), false);
 				String userType = dbcon.closeOrder(req);
 				
 				if(userType == null) {
