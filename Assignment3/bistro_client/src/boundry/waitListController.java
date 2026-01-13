@@ -121,7 +121,7 @@ public class waitListController implements IController {
             // Prepare the data again for the second attempt
             String guests = guestsNumberTxt.getText().trim();
             String contactInput = identifyText.getText().trim();
-            String subscriberId = (user.getType() == UserType.SUBSCRIBER) ? 
+            String subscriberId = (user.getType() != UserType.GUEST) ? 
                                  String.valueOf(((entities.Subscriber)user).getSubscriberID()) : "0";
             String finalContact = (user.getType() == UserType.SUBSCRIBER && contactInput.isEmpty()) ? 
                                  user.getPhone() : contactInput;

@@ -105,8 +105,10 @@ public class BistroServer extends AbstractServer {
     
     private void initWaitingLists() {
     	String waitingOrders = dbcon.getWaitingOrders("ON_THE_SPOT");
+    	System.out.println(waitingOrders);
     	if(!waitingOrders.equals("")) {
     		String[] onTheSpot = waitingOrders.split("\n");
+    		System.out.println(onTheSpot);
     		for(String order : onTheSpot) {
     			System.out.println(order);
     			Order o = new Order(Arrays.asList(order.split(",")),1);
@@ -114,8 +116,10 @@ public class BistroServer extends AbstractServer {
     		}
     	}
     	waitingOrders = dbcon.getWaitingOrders("IN_ADVANCE");
+    	System.out.println(waitingOrders);
     	if(!waitingOrders.equals("")) {
     		String[] inAdvance = waitingOrders.split("\n");
+    		System.out.println(inAdvance);
     		for(String order : inAdvance) {
     			Order o = new Order(Arrays.asList(order.split(",")),1);
     			waitlistOrderedInAdvance.enqueue(o);
