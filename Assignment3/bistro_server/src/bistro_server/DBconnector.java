@@ -30,6 +30,7 @@ import entities.requests.CancelRequest;
 import entities.requests.ChangeHoursDayRequest;
 import entities.requests.CheckConfCodeRequest;
 import entities.requests.GetReportsRequest;
+import entities.requests.GetUserActiveOrdersRequest;
 import entities.requests.LeaveTableRequest;
 import entities.requests.LoginRequest;
 import entities.requests.ReadRequest;
@@ -1213,6 +1214,25 @@ public class DBconnector {
 		} finally {
 			ConnectionPool.getInstance().returnConnection(conn);
 		}
+	}
+
+	public List<String> getUserConfCodes(GetUserActiveOrdersRequest r) {
+		Connection conn = ConnectionPool.getInstance().getConnection();
+		List<String> result = new ArrayList<>();
+		try {
+			PreparedStatement stmt = conn.prepareStatement(r.getQuery());
+			stmt.setInt(1, r.getSubId());
+			ResultSet rs = stmt.executeQuery();
+			while(rs.next()) {
+				result.add(rs.getString("confirmation_code"));
+			}
+		} catch(SQLException e) {
+			e.printStackTrace();
+		} finally {
+			ConnectionPool.getInstance().returnConnection(conn);
+		}
+		
+		return result;
 	}
 
 }

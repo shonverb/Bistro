@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.text.Text?>
 
 <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="600.0" stylesheets="@styles.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="boundry.TerminalOrderManagementScreenController">
@@ -16,7 +18,14 @@
             <Label layoutX="30.0" layoutY="30.0" styleClass="card-title" text="Check In / Out" />
             
             <Label layoutX="30.0" layoutY="80.0" text="Confirmation Code:" />
-            <TextField fx:id="confCodeTxt" layoutX="160.0" layoutY="75.0" prefWidth="300.0" />
+            
+            <StackPane layoutX="160.0" layoutY="75.0" prefHeight="25.0" prefWidth="300.0">
+               <children>
+                  <TextField fx:id="confCodeTxt" promptText="Enter code manually..." />
+                  <ComboBox fx:id="confCodeCombo" prefWidth="300.0" promptText="Select your order..." visible="false" />
+               </children>
+            </StackPane>
+            
             <Button fx:id="lostMyCodeBtn" layoutX="160.0" layoutY="110.0" mnemonicParsing="false" onAction="#onLostMyCodeClick" style="-fx-background-color: transparent; -fx-text-fill: #888; -fx-underline: true;" text="I lost my code" />
             
             <Button fx:id="getTableBtn" layoutX="30.0" layoutY="160.0" mnemonicParsing="false" onAction="#onGetTableClick" prefWidth="200.0" text="Get Table" />

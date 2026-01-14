@@ -21,6 +21,7 @@ import entities.requests.AddTableRequest;
 import entities.requests.AlterWaitlistRequest;
 import entities.requests.CheckConfCodeRequest;
 import entities.requests.GetTableRequest;
+import entities.requests.GetUserActiveOrdersRequest;
 import entities.requests.JoinWaitlistRequest;
 import entities.requests.LeaveTableRequest;
 import entities.requests.RemoveTableRequest;
@@ -65,9 +66,6 @@ public class BistroServer extends AbstractServer {
         dbcon = new DBconnector();
         clients = Collections.synchronizedList(new ArrayList<>());
         currentBistro = dbcon.getCurrentBistroState();
-//        for (Table t : tables) {
-//			currentBistro.put(new Table(t.getId(), t.getCapacity(), t.isTaken()), null);
-//		}
         tables = dbcon.getAllTables();
         handlers = new HashMap<>();
         handlers.put(RequestType.WRITE_ORDER, this::addNewOrder);
@@ -94,7 +92,7 @@ public class BistroServer extends AbstractServer {
         handlers.put(RequestType.UPDATE_TABLE_CAPACITY, this::updateTable);
         handlers.put(RequestType.GET_LIVE_BISTRO_STATE, this::getLiveState);
         handlers.put(RequestType.GET_REPORTS, dbcon::getReportsData);
-
+        handlers.put(RequestType.GET_USER_ACTIVE_ORDERS, this::getUserActiveOrders);
         handlers.put(RequestType.GET_HOURS_DATE, dbcon::getAllDatesHours);
         handlers.put(RequestType.GET_HOURS_DAY, dbcon::getAllDaysHours);
         handlers.put(RequestType.GET_MAX_TABLE, this::getMaxTable);
@@ -103,6 +101,7 @@ public class BistroServer extends AbstractServer {
         initWaitingLists();
     }
     
+    /**A method to initialize waiting lists*/
     private void initWaitingLists() {
     	String waitingOrders = dbcon.getWaitingOrders("ON_THE_SPOT");
     	System.out.println(waitingOrders);
@@ -127,6 +126,13 @@ public class BistroServer extends AbstractServer {
 		
     	}
     }
+    
+    public List<String> getUserActiveOrders(Request r){
+    	GetUserActiveOrdersRequest req = (GetUserActiveOrdersRequest)r;
+    	List<String> confCodes = dbcon.getUserConfCodes(req);
+    	return confCodes;
+    } 
+    
     
     
 	/**
