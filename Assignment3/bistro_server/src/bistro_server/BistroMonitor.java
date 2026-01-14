@@ -275,7 +275,13 @@ public class BistroMonitor implements Runnable {
 		return -1;
 	}
 	
-	
+	/**
+	 * A method that sends an email notification to the customer about their order
+	 * being due in 2 hours.
+	 * 
+	 * @param orderNum The order number.
+	 * @param contact  The customer's contact information.
+	 */
 	private void sendEmailOrderInTwoHours(String orderNum,String contact) {
 		String subject = String.format("Reminder: Your reservation at The Bistro (Order #%s)", orderNum);
 		String content = String.format(
@@ -290,6 +296,13 @@ public class BistroMonitor implements Runnable {
 		emailService.sendEmail(contact, subject, content);
 	}
 	
+	/**
+	 * A method that sends an email notification to the customer about their order
+	 * expiring before seating.
+	 * 
+	 * @param orderNum The order number.
+	 * @param contact  The customer's contact information.
+	 */
 	private void sendEmailOrderExpired(String orderNum,String contact) {
 		String subject = String.format("Reminder: Your reservation at The Bistro (Order #%s)", orderNum);
 		String content = String.format(
@@ -304,6 +317,13 @@ public class BistroMonitor implements Runnable {
 		emailService.sendEmail(contact, subject, content);
 	}
 	
+	/**
+	 * A method that sends an email notification to the customer about their order
+	 * exceeding the 2-hour seating time.
+	 * 
+	 * @param orderNum The order number.
+	 * @param contact  The customer's contact information.
+	 */
 	private void sendEmailTimeExceeded(String orderNum, String contact) {
 		String subject = String.format("Reminder: Your reservation at The Bistro (Order #%s)", orderNum);
 		String content = String.format(
@@ -318,6 +338,14 @@ public class BistroMonitor implements Runnable {
 		emailService.sendEmail(contact, subject, content);
 	}
 	
+	/**
+	 * A method that sends an email notification to the customer that their table is
+	 * ready.
+	 * 
+	 * @param recipientEmail The customer's email address.
+	 * @param orderNum       The order number.
+	 * @param tableNumber    The table number assigned.
+	 */
 	public void sendTableReadyEmail(String recipientEmail, String orderNum, int tableNumber) {
 	    String subject = String.format("Good news! Your table is ready (Order #%s)", orderNum);
 	    

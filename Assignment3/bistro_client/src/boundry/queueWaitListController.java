@@ -1,18 +1,13 @@
 package boundry;
 
 import java.io.IOException;
-import java.util.Optional;
-
 import entities.User;
 import entities.requests.AlterWaitlistRequest;
-import entities.requests.CancelRequest;
-import entities.requests.Request;
 import entities.requests.RequestType;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Alert.AlertType;

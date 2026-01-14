@@ -21,9 +21,9 @@ public class ConnectionPool {
 	//conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/bistro", "root", "");
     //conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/bistro?allowLoadLocalInfile=true&serverTimezone=Asia/Jerusalem&useSSL=false", "root", "Hodvak123!");
     // Database credentials
-    private final String DB_URL = "jdbc:mysql://localhost:3306/bistro";
+    private final String DB_URL = "jdbc:mysql://localhost:3306/bistro?allowLoadLocalInfile=true&serverTimezone=Asia/Jerusalem&useSSL=false";
     private final String USER = "root"; 
-    private final String PASS = "123456789";
+    private final String PASS = "Hodvak123!";
 
     /** Private constructor (Singleton Pattern)*/
     private ConnectionPool() {
