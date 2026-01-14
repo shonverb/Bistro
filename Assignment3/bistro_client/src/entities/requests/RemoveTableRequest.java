@@ -13,7 +13,9 @@ public class RemoveTableRequest extends Request {
 	 * @param tableID The ID of the table to be removed.
 	 */
 	public RemoveTableRequest(int tableID) {
-		super(RequestType.REMOVE_TABLE, "DELETE FROM `table` WHERE table_number = ?;");
+		super(RequestType.REMOVE_TABLE, "UPDATE tables\n"
+				+ "SET active_to = CURRENT_DATE + INTERVAL 1 MONTH\n"
+				+ "WHERE id = ?;");
 		this.tableID = tableID;
 	}
 	
