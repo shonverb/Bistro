@@ -518,6 +518,7 @@ public class BistroServer extends AbstractServer {
         }
     }
     
+    /**Shutting down the server*/
     @Override
     protected void serverStopped() {
     	try {
@@ -735,15 +736,36 @@ public class BistroServer extends AbstractServer {
         }
 	}
 
+	/**
+	 *  Gets the current bistro state 
+	 * @return the map of tables to orders
+	 */
 	public Map<Table,Order> getCurrentBistro(){
 		return currentBistro;
 	}
+	
+	/**
+	 *  Gets the just arrived waitlist
+	 * @return the just arrived waitlist
+	 */
 	public WaitingList getRegularWaitlist() {
 		return waitlistJustArrived;
 	}
+	
+	/**
+	 *  Gets the ordered in advance waitlist 
+	 * @return the ordered in advance waitlist
+	 */
 	public WaitingList getAdvanceWaitlist() {
 		return waitlistOrderedInAdvance;
 	}
+	
+	/**
+	 * Gets the maximum table capacity in the bistro
+	 * 
+	 * @param r the Request
+	 * @return the maximum table capacity
+	 */
 	public int getMaxTable(Request r) {
 		int res = 0;
 		for(Table t : currentBistro.keySet()) {
@@ -753,6 +775,13 @@ public class BistroServer extends AbstractServer {
 		}
 		return res;
 	}
+	
+	/**
+	 * Handles a request to check confirmation codes
+	 * 
+	 * @param r the CheckConfCodeRequest
+	 * @return a message indicating the result of the check
+	 */
 	public String getPotentialConfCodes(Request r) {
 		CheckConfCodeRequest req = (CheckConfCodeRequest) r;
 		String res = dbcon.checkConfCode(req);
