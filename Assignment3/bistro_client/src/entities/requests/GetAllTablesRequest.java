@@ -17,7 +17,6 @@ public class GetAllTablesRequest extends Request {
 	 */
 	public GetAllTablesRequest() {
 		super(RequestType.GET_ALL_TABLES, "");
-		// TODO Auto-generated constructor stub
 	}
 
 }

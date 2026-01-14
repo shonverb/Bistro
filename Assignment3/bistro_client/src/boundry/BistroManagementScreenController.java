@@ -8,6 +8,7 @@ import entities.requests.AddTableRequest;
 import entities.requests.ChangeHoursDayRequest;
 import entities.requests.GetAllTablesRequest;
 import entities.requests.RemoveTableRequest;
+import entities.requests.UpdateTableCapacityRequest;
 import entities.requests.WriteHoursDateRequest;
 import entities.Table;
 import javafx.application.Platform;
@@ -195,7 +196,7 @@ public class BistroManagementScreenController implements IController{
 				Table selectedTable = currentTables.getValue();
 				if(selectedTable != null) {
 					int newCapacity = Integer.parseInt(setTableCapText.getText());
-					ClientUI.console.accept(new entities.requests.UpdateTableCapacityRequest(selectedTable.getId(), newCapacity));
+					ClientUI.console.accept(new UpdateTableCapacityRequest(selectedTable.getId(), newCapacity));
 					setTableCapText.clear();
 				} else {
 					Alert alert = new Alert(AlertType.ERROR);

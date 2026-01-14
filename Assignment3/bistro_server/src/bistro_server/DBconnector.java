@@ -1195,7 +1195,7 @@ public class DBconnector {
 		if (wantToSit) {
 			query = "UPDATE `table` SET current_order = ? WHERE table_number = ?;";
 		} else {
-			query = "UPDATE `table` SET current_order = NULL WHERE table_number = ?;";
+			query = "UPDATE `table` SET current_order = '0' WHERE table_number = ?;";
 		}
 
 		try {

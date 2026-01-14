@@ -95,7 +95,6 @@ public class RegisterScreenController implements IController{
     		Subscriber s = new Subscriber(generatedId,userName,fname,lname,phone,email,status,new ArrayList<>());
     		RegisterRequest r = new RegisterRequest(s);
     		ClientUI.console.accept(r);
-    		user = s;
     	}
     	if(emptyException) {
     		Alert alert = new Alert(AlertType.ERROR);

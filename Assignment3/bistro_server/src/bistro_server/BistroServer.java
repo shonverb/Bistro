@@ -613,9 +613,9 @@ public class BistroServer extends AbstractServer {
 	public String leaveTable(Request r) {
 		LeaveTableRequest req = (LeaveTableRequest) r;
 		String confcode = req.getConfCode();
+		System.out.println(currentBistro);
 		for (Entry<Table, Order> entry : currentBistro.entrySet()) {
 			Order order = entry.getValue();
-			System.out.println(order.getSittingtime());
 			if (order != null && order.getConfirmationCode().equals(confcode)&& order.getSittingtime()!=null) {
 				currentBistro.put(entry.getKey(), null);
 				entry.getKey().setTaken(false);
@@ -677,14 +677,7 @@ public class BistroServer extends AbstractServer {
 	 * @return a message indicating success or failure
 	 */
 	public String updateTable(Request r) {
-		UpdateTableCapacityRequest req = (UpdateTableCapacityRequest)r;
-		if(!dbcon.removeTable(req.getRemoveReq())) {
-			return "ERROR: updating the table failed";
-		}
-		if(!dbcon.addNewTable(req.getAddReq())) {
-			return "ERROR: updating the table failed";
-		}
-		return "Updated table number " +req.getRemoveReq().getId() + " to " +req.getAddReq().getCap() + " sucessfully"; 
+		return "";
 	}
 
 	/**
