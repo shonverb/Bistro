@@ -677,7 +677,14 @@ public class BistroServer extends AbstractServer {
 	 * @return a message indicating success or failure
 	 */
 	public String updateTable(Request r) {
-		return "";
+		UpdateTableCapacityRequest req = (UpdateTableCapacityRequest)r;
+		if(!dbcon.removeTable(req.getRemoveReq())) {
+			return "ERROR: updating the table failed";
+		}
+		if(!dbcon.addNewTable(req.getAddReq())) {
+			return "ERROR: updating the table failed";
+		}
+		return "Updated table number " +req.getRemoveReq().getId() + " to " +req.getAddReq().getCap() + " sucessfully"; 
 	}
 
 	/**
