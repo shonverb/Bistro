@@ -96,6 +96,8 @@ public class BistroServer extends AbstractServer {
         handlers.put(RequestType.GET_HOURS_DATE, dbcon::getAllDatesHours);
         handlers.put(RequestType.GET_HOURS_DAY, dbcon::getAllDaysHours);
         handlers.put(RequestType.GET_MAX_TABLE, this::getMaxTable);
+        handlers.put(RequestType.CLOSE_DATE, dbcon::closeRestaurantByDate);
+        handlers.put(RequestType.CLOSE_DAY, dbcon::closeRestaurantByDay);
         
         ConnectionPool.getInstance();
         initWaitingLists();

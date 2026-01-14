@@ -9,6 +9,7 @@ public class ChangeHoursDayRequest extends Request{
 	private String day;
 	private String open;
 	private String close;
+	private String status;
 
 	/**
 	 * Constructs a ChangeHoursDayRequest with the specified day, opening hour, and
@@ -18,11 +19,12 @@ public class ChangeHoursDayRequest extends Request{
 	 * @param open  The new opening hour.
 	 * @param close The new closing hour.
 	 */
-	public ChangeHoursDayRequest(String day, String open, String close) {
-		super(RequestType.CHANGE_HOURS_DAY, "UPDATE `day` SET open_hour = ? , close_hour = ? WHERE day_of_week = ?");
+	public ChangeHoursDayRequest(String day, String open, String close, String status) {
+		super(RequestType.CHANGE_HOURS_DAY, "UPDATE `day` SET open_hour = ? , close_hour = ? , status = ? WHERE day_of_week = ?");
 		this.day = day;
 		this.open = open;
 		this.close = close;
+		this.status = status;
 	}
 	
 	public String getDay() {
@@ -35,5 +37,9 @@ public class ChangeHoursDayRequest extends Request{
 	
 	public String getClose() {
 		return close;
+	}
+	
+	public String getStatus() {
+		return status;
 	}
 }
