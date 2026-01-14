@@ -8,8 +8,6 @@ import entities.requests.CancelRequest;
 import entities.requests.CheckConfCodeRequest;
 import entities.requests.LeaveTableRequest;
 import javafx.application.Platform;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;

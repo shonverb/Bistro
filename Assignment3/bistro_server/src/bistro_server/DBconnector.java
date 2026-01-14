@@ -3,7 +3,6 @@ package bistro_server;
 import java.util.TreeMap;
 import java.util.HashMap;
 import java.util.Map;
-
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -24,7 +23,6 @@ import entities.Order;
 import entities.Subscriber;
 import entities.Table;
 import entities.User;
-import entities.Worker;
 import entities.requests.AddTableRequest;
 import entities.requests.CancelRequest;
 import entities.requests.ChangeHoursDayRequest;
@@ -39,7 +37,6 @@ import entities.requests.Request;
 import entities.requests.ShowTakenSlotsRequest;
 import entities.requests.WriteHoursDateRequest;
 import entities.Day;
-import entities.Manager;
 
 /**
  * A class that handles all operations on the database, receiving requests and
@@ -605,8 +602,10 @@ public class DBconnector {
 			stmt.setString(3, req.getDay());
 
 			int rowsUpdated = stmt.executeUpdate();
-			if (rowsUpdated > 0)
+			if (rowsUpdated > 0) {
+				cancelOrdersOutsideHours(conn, req.getDay(), openTime, closeTime);
 				return "Details updated successfully.";
+			}
 			else
 				return "No details were updated.";
 		} catch (SQLException e) {
@@ -681,8 +680,10 @@ public class DBconnector {
 			stmt.setTime(3, java.sql.Time.valueOf(closeTime));
 
 			int rowsInserted = stmt.executeUpdate();
-			if (rowsInserted > 0)
+			if (rowsInserted > 0) {
+				cancelOrdersOutsideHours(conn, req.getDate(), openTime, closeTime);
 				return "Hours for date inserted successfully.";
+			}
 			else
 				return "No rows were inserted.";
 		} catch (SQLException e) {
@@ -1165,6 +1166,11 @@ public class DBconnector {
 
 	}
 
+	/**
+	 * the method gets all waiting orders of a specific type from the database
+	 * @param OrderType
+	 * @return A string containing all waiting orders of the specified type
+	 */
 	public String getWaitingOrders(String OrderType) {
 		Connection conn = ConnectionPool.getInstance().getConnection();
 		String query = "SELECT * FROM `order` WHERE status = 'WAITING' AND type_of_order = ?";
@@ -1189,6 +1195,12 @@ public class DBconnector {
 		return sb.isEmpty() ? "" : sb.toString();
 	}
 
+	/**
+	 * the method assigns or removes an order to/from a table in the database
+	 * @param orderNum
+	 * @param tableNum
+	 * @param wantToSit
+	 */
 	public void putOrderToTable(String orderNum, int tableNum, boolean wantToSit) {
 		Connection conn = ConnectionPool.getInstance().getConnection();
 		String query;
@@ -1214,5 +1226,34 @@ public class DBconnector {
 			ConnectionPool.getInstance().returnConnection(conn);
 		}
 	}
+	
+	/**
+	 * the method cancels orders outside of opening hours in the database
+	 * @param conn
+	 * @param date
+	 * @param openTime
+	 * @param closeTime
+	 * @throws SQLException
+	 */
+	private void cancelOrdersOutsideHours(Connection conn, String date, String openTime, String closeTime) throws SQLException{
+	    String sql = """
+	        UPDATE `order`
+	        SET status = 'CANCELLED'
+	        WHERE DATE(order_datetime) = ?
+	        AND (
+	            TIME(order_datetime) < ?
+	            OR TIME(order_datetime) >= ?
+	        )
+	        AND status IN ('OPEN', 'WAITING')
+	    """;
+
+	    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+	        stmt.setDate(1, Date.valueOf(date));
+	        stmt.setTime(2, Time.valueOf(openTime));
+	        stmt.setTime(3, Time.valueOf(closeTime));
+	        stmt.executeUpdate();
+	    }
+	}
+
 
 }
