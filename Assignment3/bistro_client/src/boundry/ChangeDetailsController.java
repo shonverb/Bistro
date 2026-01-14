@@ -1,5 +1,7 @@
 package boundry;
 
+import javafx.scene.control.TextArea;
+
 import entities.Subscriber;
 import entities.User;
 import entities.UserType;
@@ -34,6 +36,19 @@ public class ChangeDetailsController implements IController {
 
     @FXML
     private TextField userNameTxt;
+    
+    @FXML
+    private TextArea nameArea;
+    @FXML
+    private TextArea mailArea;
+    @FXML
+    private TextArea phoneArea;
+    @FXML
+    private TextArea usernameArea;
+    @FXML
+    private TextArea idArea;
+    
+    
 
 	/**
 	 * Initializes the controller and sets up input validation.
@@ -42,11 +57,15 @@ public class ChangeDetailsController implements IController {
     void initialize() {
     	System.out.println("initialize ChangeDetailsController");
     	ClientUI.console.setController(this);
+
+    	
     	phoneNumberTxt.textProperty().addListener((obs, oldValue, newValue) -> {
     	    if (!newValue.matches("\\d*")) {
     	    	phoneNumberTxt.setText(oldValue);
     	    }
     	});
+    	
+
     }
     
 	/**
@@ -73,9 +92,23 @@ public class ChangeDetailsController implements IController {
     void onUpdateClick(ActionEvent event) {
     	boolean emailException = false;
     	boolean phoneException = false;
+    	boolean nameException = false;
+    	
     	String query = "UPDATE `user` SET";
     	if(!fullNameTxt.getText().isEmpty()) {
-			query += " full_name = '" + fullNameTxt.getText() + "',";
+    		String[] names = fullNameTxt.getText().trim().split("\\s+");
+    		
+    		
+    		if(names.length != 2) {
+    	        nameException = true;
+    	    } else {
+    	        // NOTE: Depending on your DB, you might need to update 'full_name' or separate columns.
+    	        // This keeps your original query format but uses the validated text.
+    	        query += " full_name = '" + names[0] + " " + names[1] + "',"; 
+//    			query += " full_name = '" + fullNameTxt.getText() + "',";
+
+    	    }
+    		
 		}
     	if(!emailTxt.getText().isEmpty()) {
     		if(!isValidEmail(emailTxt.getText()))
@@ -106,7 +139,16 @@ public class ChangeDetailsController implements IController {
     		alert.setContentText("Please enter valid phone number with 10 digits");
     		alert.showAndWait();
     	}
-    	if((!emailException) && (!phoneException)) {
+    	
+    	if(nameException) {
+    	    Alert alert = new Alert(AlertType.ERROR);
+    	    alert.setTitle("Error Occurred");
+    	    alert.setHeaderText("Input Validation Failed");
+    	    alert.setContentText("Please enter exactly two words (First Name and Last Name) separated by a space.");
+    	    alert.showAndWait();
+    	}
+    	
+    	if((!emailException) && (!phoneException) && (!nameException)) {
         	query = query.substring(0, query.length() - 1); // remove last comma
         	query += " WHERE subscriber_id = " + user.getSubscriberID();
         	UpdateDetailsRequest req = new UpdateDetailsRequest(query);
@@ -125,7 +167,25 @@ public class ChangeDetailsController implements IController {
 		        alert.setHeaderText(null);
 		        alert.setContentText((String) result);
 		        alert.showAndWait();
-		    });	}
+		        
+		        if ( ((String) result).equals("Details updated successfully.") ) {
+		            if (!fullNameTxt.getText().isEmpty()) {
+		                String[] names = fullNameTxt.getText().trim().split("\\s+");
+		                this.user.setFirstName(names[0]); // Set First Name
+		                this.user.setLastName(names[1]);  // Set Last Name
+		            }
+
+		            this.user.setEmail(emailTxt.getText().isEmpty() ? this.user.getEmail() : emailTxt.getText());
+		            this.user.setPhone(phoneNumberTxt.getText().isEmpty() ? this.user.getPhone() : phoneNumberTxt.getText());
+		            this.user.setUserName(userNameTxt.getText().isEmpty() ? this.user.getUserName() : userNameTxt.getText());
+		            
+		            showDetails();
+		        }
+		        
+		    });	
+		 
+		 
+	}
 
 	/**
 	 * Sets the user for this controller.
@@ -135,6 +195,8 @@ public class ChangeDetailsController implements IController {
 	@Override
 	public void setUser(User user) {
 		this.user = (Subscriber) user;
+		
+		showDetails();
 	}
 
 	/**
@@ -146,5 +208,14 @@ public class ChangeDetailsController implements IController {
 	public boolean isValidEmail(String email) {
 	    return email != null && email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
 	}
-
+	
+	private void showDetails() {
+		nameArea.setText(this.user.getFirstName() + " " + this.user.getLastName());
+	    
+	    mailArea.setText(this.user.getEmail());
+	    phoneArea.setText(this.user.getPhone());
+	    usernameArea.setText(this.user.getUserName());
+	    idArea.setText("" + this.user.getSubscriberID());
+	}
+	
 }
