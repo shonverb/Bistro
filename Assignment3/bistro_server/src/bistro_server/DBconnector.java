@@ -1237,6 +1237,42 @@ public class DBconnector {
 	 * @throws SQLException
 	 */
 	private void cancelOrdersOutsideHours(Connection conn, String date, String openTime, String closeTime) throws SQLException{
+		List<String> cnl = new ArrayList<>();
+
+		String selectSql = """
+		    SELECT contact
+		    FROM `order`
+		    WHERE DATE(order_datetime) = ?
+		      AND (TIME(order_datetime) < ? OR TIME(order_datetime) >= ?)
+		      AND status IN ('OPEN', 'WAITING')
+		""";
+
+		try (PreparedStatement stmt = conn.prepareStatement(selectSql)) {
+		    stmt.setDate(1, Date.valueOf(date));
+		    stmt.setTime(2, Time.valueOf(openTime));
+		    stmt.setTime(3, Time.valueOf(closeTime));
+
+		    ResultSet rs = stmt.executeQuery();
+		    while (rs.next()) {
+		        cnl.add(rs.getString("contact"));
+		    }
+		}
+
+		EmailService emailService = new EmailService();
+		for(String email : cnl) {
+			if(email.contains("@")) {
+				String subject = "Order Cancellation Notice";
+				String body = "Dear Customer,\n\n" + "We regret to inform you that your order scheduled for " + date
+						+ " has been cancelled due to it being outside of our operating hours.\n"
+						+ "We apologize for any inconvenience this may cause and appreciate your understanding.\n\n"
+						+ "Best regards,\n" + "Bistro Team";
+				emailService.sendEmail(email, subject, body);
+			}
+			else {
+				ServerUI.updateInScreen("order cancelled notice sent to phone number " + email);
+			}
+		}
+		
 	    String sql = """
 	        UPDATE `order`
 	        SET status = 'CANCELLED'

@@ -21,9 +21,9 @@ public class WriteHoursDateRequest extends Request{
 	 */
 	public WriteHoursDateRequest(String date, String open, String close) {
 		super(RequestType.WRITE_HOURS_DATE,
-				"INSERT INTO `date`" + 
-				"(specific_date, open_hour, close_hour)" +
-				"VALUES (?, ?, ?)"
+				"INSERT INTO `date` (specific_date, open_hour, close_hour) " +
+					      "VALUES (?, ?, ?) " +
+					      "ON DUPLICATE KEY UPDATE open_hour = VALUES(open_hour), close_hour = VALUES(close_hour)"
 		);
 		this.date = date;
 		this.open = open;
