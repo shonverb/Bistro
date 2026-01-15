@@ -2,8 +2,9 @@ package boundry;
 
 import java.util.Locale;
 import java.util.Map;
-import entities.GetReportsRequest;
+
 import entities.User;
+import entities.requests.GetReportsRequest;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -228,7 +229,7 @@ public class ReportsScreenController implements IController {
      */
     @FXML
     void onBackBtnClick(ActionEvent event) {
-        ClientUI.console.switchScreen(this, event, "/boundry/WorkerScreen.fxml", user);
+        ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/WorkerScreen.fxml", user);
     }
     
 

@@ -37,11 +37,15 @@ public class ClientScreenController implements IController {
 	 */
     @FXML
     void initialize() {
+    	if (user != null && (user.getType() == UserType.BISTRO_REP || user.getType() == UserType.MANAGER)) {
+    	    logOutBtn.setText("Back");
+		}
     	ClientUI.console.setController(this);
     	changeDetailsBtn.visibleProperty().bind(isLoggedIn);
     	changeDetailsBtn.managedProperty().bind(isLoggedIn);
     	orderHistoryBtn.visibleProperty().bind(isLoggedIn);
     	orderHistoryBtn.managedProperty().bind(isLoggedIn);
+
     }
 
 	/**
@@ -52,7 +56,7 @@ public class ClientScreenController implements IController {
 	 */
     @FXML
     void onChangeDetailsClick(ActionEvent event) {
-    	ClientUI.console.switchScreen(this, event, "/boundry/ChangeDetailsScreen.fxml", user);
+    	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/ChangeDetailsScreen.fxml", user);
     }
 
     /**
@@ -61,7 +65,12 @@ public class ClientScreenController implements IController {
      */
     @FXML
     void onLogOutBtnClick(ActionEvent event) {
-		ClientUI.console.switchScreen(this, event, "/boundry/loginScreen.fxml", null);
+    	if (user != null && (user.getType() == UserType.BISTRO_REP || user.getType() == UserType.MANAGER)) {
+		    ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/WorkerScreen.fxml", user);
+    	}else {
+		    	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/loginScreen.fxml", null);
+		    }
+    	
 
     }
 
@@ -73,7 +82,7 @@ public class ClientScreenController implements IController {
 	 */
     @FXML
     void onOrderHistoryClick(ActionEvent event) {
-    	ClientUI.console.switchScreen(this, event, "/boundry/HistoryScreen.fxml", user);
+    	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/HistoryScreen.fxml", user);
 
     }
 
@@ -85,7 +94,7 @@ public class ClientScreenController implements IController {
 	 */
     @FXML
     void onOrderManagementClick(ActionEvent event) {
-    	ClientUI.console.switchScreen(this, event, "/boundry/AppOrderManagementScreen.fxml", user);
+    	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/AppOrderManagementScreen.fxml", user);
     }
 
 	/**
@@ -96,7 +105,7 @@ public class ClientScreenController implements IController {
 	 */
     @FXML
     void onWaitingListClick(ActionEvent event) {
-    	ClientUI.console.switchScreen(this, event, "/boundry/queueWaitListScreen.fxml", user);
+    	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/queueWaitListScreen.fxml", user);
     }
 
     /**
@@ -116,6 +125,9 @@ public class ClientScreenController implements IController {
 	public void setUser(User user) {
 		this.user = user;
         isLoggedIn.set(user != null && user.getType() != UserType.GUEST);
+    	if (user != null && (user.getType() == UserType.BISTRO_REP || user.getType() == UserType.MANAGER)) {
+    	    logOutBtn.setText("Back");
+		}
 	}
 
 }

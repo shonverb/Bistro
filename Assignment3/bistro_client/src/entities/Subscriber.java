@@ -7,8 +7,8 @@ import java.util.Objects;
 /**
  * Subscriber class represents a subscriber user in the system.
  */
-public class Subscriber extends User implements Serializable {
-	private static final long serialVersionUID = 1L;
+public class Subscriber extends User implements Serializable{
+	private static final long serialVersionUID = -1659025603535708879L;
 	private int subscriberID;
 	private String userName;
 	private String firstName;
@@ -56,6 +56,29 @@ public class Subscriber extends User implements Serializable {
 	public String getLastName() {
 		return lastName;
 	}
+	
+	
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+	
+	public void setFirstName(String firstName) {
+		this.firstName = firstName;
+	}
+	
+	public void setLastName(String lastName) {
+		this.lastName = lastName;
+	}
+	
+	public void setPhoneNumber(String phoneNumber) {
+		super.setPhone(phoneNumber);
+	}
+	
+	public void setEmailAddress(String email) {
+		super.setEmail(email);
+	}
+	
+	
 		
 	@Override
 	public boolean equals(Object obj) {

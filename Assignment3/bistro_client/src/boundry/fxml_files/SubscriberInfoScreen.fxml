@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.text.Text?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="700.0" stylesheets="@styles.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="boundry.SubscriberInfoController">
+   <children>
+      <Text layoutX="50.0" layoutY="60.0" styleClass="title-text" text="Subscribers List" />
+      
+      <Pane layoutX="50.0" layoutY="90.0" prefHeight="330.0" prefWidth="600.0" styleClass="card-pane">
+         <children>
+            <TableView fx:id="subscriberTable" layoutX="20.0" layoutY="20.0" prefHeight="290.0" prefWidth="560.0">
+              <columns>
+                <TableColumn fx:id="idColumn" prefWidth="75.0" text="ID" />
+                <TableColumn fx:id="nameColumn" prefWidth="110.0" text="Name" />
+                <TableColumn fx:id="usernameColumn" prefWidth="100.0" text="Username" />
+                <TableColumn fx:id="phoneColumn" prefWidth="100.0" text="Phone" />
+                <TableColumn fx:id="emailColumn" prefWidth="173.0" text="Email" />
+              </columns>
+            </TableView>
+         </children>
+      </Pane>
+
+      <Button fx:id="displaySubscribersButton" layoutX="450.0" layoutY="440.0" mnemonicParsing="false" onAction="#onDisplaySubscribersClick" prefWidth="200.0" text="Load Subscribers" />
+      <Button fx:id="backBtn" layoutX="50.0" layoutY="440.0" mnemonicParsing="false" onAction="#onBackBtnClick" styleClass="button-secondary-white" text="Back" />
+   </children>
+</AnchorPane>

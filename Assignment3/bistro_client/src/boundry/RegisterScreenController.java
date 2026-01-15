@@ -2,9 +2,9 @@ package boundry;
 import java.util.ArrayList;
 import java.util.Random;
 
-import entities.RegisterRequest;
 import entities.Subscriber;
 import entities.User;
+import entities.requests.RegisterRequest;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
@@ -64,7 +64,7 @@ public class RegisterScreenController implements IController{
      * */
     @FXML
     void onCancelClick(ActionEvent event) {
-    	ClientUI.console.switchScreen(this, event, "/boundry/WorkerScreen.fxml",user);
+    	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/WorkerScreen.fxml",user);
     }
     /**
      * when the user clicks 'Submit' (registering the user)
@@ -95,7 +95,6 @@ public class RegisterScreenController implements IController{
     		Subscriber s = new Subscriber(generatedId,userName,fname,lname,phone,email,status,new ArrayList<>());
     		RegisterRequest r = new RegisterRequest(s);
     		ClientUI.console.accept(r);
-    		user = s;
     	}
     	if(emptyException) {
     		Alert alert = new Alert(AlertType.ERROR);

@@ -1,6 +1,5 @@
 package boundry;
 
-import entities.Guest;
 import entities.User;
 import entities.UserType;
 import javafx.beans.property.BooleanProperty;
@@ -18,9 +17,6 @@ public class WorkerScreenController implements IController {
 	
     @FXML
     private Button bistroManagementBtn;
-
-    @FXML
-    private Button changeDetailsBtn;
 
     @FXML
     private Button historyBtn;
@@ -67,23 +63,18 @@ public class WorkerScreenController implements IController {
 	 */
     @FXML
     void onBistroManagementClick(ActionEvent event) {
-    	ClientUI.console.switchScreen(this, event, "/boundry/BistroManagementScreen.fxml", user);
+    	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/BistroManagementScreen.fxml", user);
     }
-
+    
 	/**
-	 * Handles the click event for the Change Details button. Navigates to the
-	 * Change Details screen.
+	 * Handles the click event for the Orders History button. Navigates to the
+	 * History screen.
 	 * 
 	 * @param event The action event triggered by the button click.
 	 */
     @FXML
-    void onChangeDetailsClick(ActionEvent event) {
-    	ClientUI.console.switchScreen(this, event, "/boundry/ChangeDetailsScreen.fxml", user);
-    }
-
-    @FXML
     void onHistoryBtnClick(ActionEvent event) {
-    	ClientUI.console.switchScreen(this, event, "/boundry/HistoryScreen.fxml", user);
+    	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/HistoryScreen.fxml", user);
     }
 
 	/**
@@ -94,7 +85,7 @@ public class WorkerScreenController implements IController {
 	 */
     @FXML
     void onLogOutClick(ActionEvent event) {
-		ClientUI.console.switchScreen(this, event, "/boundry/loginScreen.fxml", null);
+		ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/loginScreen.fxml", null);
     }
 
 	/**
@@ -105,7 +96,7 @@ public class WorkerScreenController implements IController {
 	 */
     @FXML
     void onNewOrderBtn(ActionEvent event) {
-    	ClientUI.console.switchScreen(this, event, "/boundry/OrderScreen.fxml", user);
+    	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/ClientScreen.fxml", user);
     }
 
 	/**
@@ -116,7 +107,7 @@ public class WorkerScreenController implements IController {
 	 */
     @FXML
     void onOrderDetailsClick(ActionEvent event) {
-		ClientUI.console.switchScreen(this, event, "/boundry/AllOrdersScreen.fxml", user);
+		ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/AllOrdersScreen.fxml", user);
     }
 
 	/**
@@ -127,7 +118,7 @@ public class WorkerScreenController implements IController {
 	 */
     @FXML
     void onReportClick(ActionEvent event) {
-    	ClientUI.console.switchScreen(this, event, "/boundry/ReportsScreen.fxml", user);
+    	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/ReportsScreen.fxml", user);
     }
 
 	/**
@@ -138,7 +129,7 @@ public class WorkerScreenController implements IController {
 	 */
     @FXML
     void onSubscriberDetailsClick(ActionEvent event) {
-    	ClientUI.console.switchScreen(this, event, "/boundry/SubscriberInfoScreen.fxml", user);
+    	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/SubscriberInfoScreen.fxml", user);
     }
 
 	/**
@@ -148,7 +139,7 @@ public class WorkerScreenController implements IController {
 	 */
     @FXML
     void onWaitingListClick(ActionEvent event) {
-    	ClientUI.console.switchScreen(this, event, "/boundry/CurrentStateScreen.fxml", user);
+    	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/CurrentStateScreen.fxml", user);
     }
     
     /**
@@ -157,7 +148,7 @@ public class WorkerScreenController implements IController {
      */
     @FXML
     void onRegisterClick(ActionEvent event) {
-    	ClientUI.console.switchScreen(this, event, "/boundry/registerScreen.fxml",user);
+    	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/registerScreen.fxml",user);
     }
 
     /**

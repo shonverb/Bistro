@@ -1,6 +1,7 @@
 package bistro_server;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -13,21 +14,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import entities.AddTableRequest;
-import entities.GetTableRequest;
-import entities.JoinWaitlistRequest;
-import entities.LeaveTableRequest;
-import entities.AlterWaitlistRequest;
+
 import entities.Order;
-import entities.RemoveTableRequest;
-import entities.Request;
-import entities.RequestHandler;
-import entities.RequestType;
-import entities.ReserveRequest;
-import entities.ShowTakenSlotsRequest;
 import entities.Table;
-import entities.UpdateTableCapacityRequest;
-import entities.WriteRequest;
+import entities.requests.AddTableRequest;
+import entities.requests.AlterWaitlistRequest;
+import entities.requests.CheckConfCodeRequest;
+import entities.requests.GetTableRequest;
+import entities.requests.GetUserActiveOrdersRequest;
+import entities.requests.JoinWaitlistRequest;
+import entities.requests.LeaveTableRequest;
+import entities.requests.RemoveTableRequest;
+import entities.requests.Request;
+import entities.requests.RequestHandler;
+import entities.requests.RequestType;
+import entities.requests.ReserveRequest;
+import entities.requests.ShowTakenSlotsRequest;
+import entities.requests.UpdateTableCapacityRequest;
+import entities.requests.WriteRequest;
 import ocsf.server.AbstractServer;
 import ocsf.server.ConnectionToClient;
 /**The server, extending the AbstractServer*/
@@ -46,7 +50,7 @@ public class BistroServer extends AbstractServer {
     private HashMap<RequestType,RequestHandler> handlers;
 
     private HashMap<Table,Order> currentBistro;
-    public static LocalDateTime dateTime = LocalDateTime.of(LocalDate.of(2026, 1, 8), LocalTime.of(15, 00));
+    public static LocalDateTime dateTime = LocalDateTime.of(LocalDate.of(2026, 1, 21), LocalTime.of(12, 00));
     
     public static final DateTimeFormatter DT_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
      /**A connection to the database*/
@@ -61,10 +65,7 @@ public class BistroServer extends AbstractServer {
         currentBistro = new HashMap<>();
         dbcon = new DBconnector();
         clients = Collections.synchronizedList(new ArrayList<>());
-        tables = dbcon.getRelevantTables();
-        for (Table t : tables) {
-			currentBistro.put(new Table(t.getId(), t.getCapacity(), t.isTaken()), null);
-		}
+        currentBistro = dbcon.getCurrentBistroState();
         tables = dbcon.getAllTables();
         handlers = new HashMap<>();
         handlers.put(RequestType.WRITE_ORDER, this::addNewOrder);
@@ -72,17 +73,15 @@ public class BistroServer extends AbstractServer {
         handlers.put(RequestType.LOGIN_REQUEST, dbcon::checkLogin);
         handlers.put(RequestType.REGISTER_REQUEST, dbcon::addNewUser);
         handlers.put(RequestType.CANCEL_REQUEST, dbcon::cancelOrder);
-        //handlers.put(RequestType.GET_TAKEN_SLOTS, this::checkAvailability);
         handlers.put(RequestType.RESERVE_TABLE, this::reserveTableInAdvance);
         handlers.put(RequestType.JOIN_WAITLIST, this::handleJoinWaitlist);
         handlers.put(RequestType.LEAVE_WAITLIST, this::handleLeaveWaitlist);
         handlers.put(RequestType.SPOT_WAITLIST, this::handleSpotWaitlist);
         handlers.put(RequestType.UPDATE_DETAILS, dbcon::updateDetails);
         handlers.put(RequestType.ORDER_HISTORY,dbcon::getOrderHistory);
-        handlers.put(RequestType.CHECK_CONFCODE, dbcon::checkConfCode);
+        handlers.put(RequestType.CHECK_CONFCODE, this::getPotentialConfCodes);
         handlers.put(RequestType.GET_ALL_ACTIVE_ORDERS, dbcon::getAllActiveOrders);
         handlers.put(RequestType.GET_ALL_SUBSCRIBERS, dbcon::getAllSubscribers);
-        //handlers.put(RequestType.TRY_SEAT,this::trySeat);
         handlers.put(RequestType.GET_TABLE, this::getTableForOrder);
         handlers.put(RequestType.LEAVE_TABLE,this::leaveTable);
         handlers.put(RequestType.CHANGE_HOURS_DAY, dbcon::changeHoursDay);
@@ -93,13 +92,50 @@ public class BistroServer extends AbstractServer {
         handlers.put(RequestType.UPDATE_TABLE_CAPACITY, this::updateTable);
         handlers.put(RequestType.GET_LIVE_BISTRO_STATE, this::getLiveState);
         handlers.put(RequestType.GET_REPORTS, dbcon::getReportsData);
-
+        handlers.put(RequestType.GET_USER_ACTIVE_ORDERS, this::getUserActiveOrders);
         handlers.put(RequestType.GET_HOURS_DATE, dbcon::getAllDatesHours);
         handlers.put(RequestType.GET_HOURS_DAY, dbcon::getAllDaysHours);
         handlers.put(RequestType.GET_MAX_TABLE, this::getMaxTable);
+        
+        ConnectionPool.getInstance();
+        initWaitingLists();
     }
     
-    /**
+    /**A method to initialize waiting lists*/
+    private void initWaitingLists() {
+    	String waitingOrders = dbcon.getWaitingOrders("ON_THE_SPOT");
+    	System.out.println(waitingOrders);
+    	if(!waitingOrders.equals("")) {
+    		String[] onTheSpot = waitingOrders.split("\n");
+    		System.out.println(onTheSpot);
+    		for(String order : onTheSpot) {
+    			System.out.println(order);
+    			Order o = new Order(Arrays.asList(order.split(",")),1);
+    			waitlistJustArrived.enqueue(o);
+    		}
+    	}
+    	waitingOrders = dbcon.getWaitingOrders("IN_ADVANCE");
+    	System.out.println(waitingOrders);
+    	if(!waitingOrders.equals("")) {
+    		String[] inAdvance = waitingOrders.split("\n");
+    		System.out.println(inAdvance);
+    		for(String order : inAdvance) {
+    			Order o = new Order(Arrays.asList(order.split(",")),1);
+    			waitlistOrderedInAdvance.enqueue(o);
+    		}
+		
+    	}
+    }
+    
+    public List<String> getUserActiveOrders(Request r){
+    	GetUserActiveOrdersRequest req = (GetUserActiveOrdersRequest)r;
+    	List<String> confCodes = dbcon.getUserConfCodes(req);
+    	return confCodes;
+    } 
+    
+    
+    
+	/**
      * Sending messages from client over to the database connector
      */
     @Override
@@ -112,7 +148,7 @@ public class BistroServer extends AbstractServer {
         System.out.println("Request of type " + r.getType() + " handled with result: " + result.toString());
         System.out.println("------------------------------------------------------------------------------");
         try {
-            client.sendToClient(result); // ALWAYS send response
+            client.sendToClient(result);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -275,6 +311,7 @@ public class BistroServer extends AbstractServer {
         	currentBistro.put(desiredTable, waitlistOrder); // Seat at the first available table
 
         	desiredTable.setTaken(true);
+        	dbcon.putOrderToTable(waitlistOrder.getOrderNumber(), desiredTable.getId(), true);
         	dbcon.markArrivalAtTerminal(waitlistOrder.getOrderNumber());
 			dbcon.markOrderAsSeated(waitlistOrder.getOrderNumber());
 			dbcon.setOrderType(waitlistOrder.getOrderNumber(),"ON_THE_SPOT");
@@ -481,6 +518,17 @@ public class BistroServer extends AbstractServer {
         }
     }
     
+    /**Shutting down the server*/
+    @Override
+    protected void serverStopped() {
+    	try {
+			ConnectionPool.getInstance().shutdown();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+    	System.exit(0);
+    }
+    
     /**
      * Gets the table for a given order based on confirmation code
      * @param r the GetTableRequest
@@ -546,7 +594,7 @@ public class BistroServer extends AbstractServer {
         			System.out.println("Setting sitting time to current Bistro time: " + BistroServer.dateTime.toString() + "To order number "+ o.getOrderNumber());
 					currentBistro.put(t, o); // Seat at the first available table
 					t.setTaken(true);
-				
+					dbcon.putOrderToTable(o.getOrderNumber(), desiredTable.getId(), true);
 					dbcon.markOrderAsSeated(o.getOrderNumber());
 					break;
 				}
@@ -572,11 +620,13 @@ public class BistroServer extends AbstractServer {
 	public String leaveTable(Request r) {
 		LeaveTableRequest req = (LeaveTableRequest) r;
 		String confcode = req.getConfCode();
+		System.out.println(currentBistro);
 		for (Entry<Table, Order> entry : currentBistro.entrySet()) {
 			Order order = entry.getValue();
 			if (order != null && order.getConfirmationCode().equals(confcode)&& order.getSittingtime()!=null) {
 				currentBistro.put(entry.getKey(), null);
 				entry.getKey().setTaken(false);
+	        	dbcon.putOrderToTable(order.getOrderNumber(), entry.getKey().getId(), false);
 				String userType = dbcon.closeOrder(req);
 				
 				if(userType == null) {
@@ -686,15 +736,36 @@ public class BistroServer extends AbstractServer {
         }
 	}
 
+	/**
+	 *  Gets the current bistro state 
+	 * @return the map of tables to orders
+	 */
 	public Map<Table,Order> getCurrentBistro(){
 		return currentBistro;
 	}
+	
+	/**
+	 *  Gets the just arrived waitlist
+	 * @return the just arrived waitlist
+	 */
 	public WaitingList getRegularWaitlist() {
 		return waitlistJustArrived;
 	}
+	
+	/**
+	 *  Gets the ordered in advance waitlist 
+	 * @return the ordered in advance waitlist
+	 */
 	public WaitingList getAdvanceWaitlist() {
 		return waitlistOrderedInAdvance;
 	}
+	
+	/**
+	 * Gets the maximum table capacity in the bistro
+	 * 
+	 * @param r the Request
+	 * @return the maximum table capacity
+	 */
 	public int getMaxTable(Request r) {
 		int res = 0;
 		for(Table t : currentBistro.keySet()) {
@@ -703,6 +774,28 @@ public class BistroServer extends AbstractServer {
 			}
 		}
 		return res;
+	}
+	
+	/**
+	 * Handles a request to check confirmation codes
+	 * 
+	 * @param r the CheckConfCodeRequest
+	 * @return a message indicating the result of the check
+	 */
+	public String getPotentialConfCodes(Request r) {
+		CheckConfCodeRequest req = (CheckConfCodeRequest) r;
+		String res = dbcon.checkConfCode(req);
+		String toSend = "";
+		if(res.equals("")) {
+			 toSend = "No confirmation codes found for that contact in the specified time frame.";
+		}
+		else {
+			 toSend = "Potential Confirmation codes has been sent to your email.";
+			 EmailService emailService = new EmailService();
+			 emailService.sendEmail(req.getcontact(), "Bistro Management - Confirmation Code Inquiry", "Potential Confirmation codes found: " + res);
+		}
+
+		return toSend;
 	}
 }
 

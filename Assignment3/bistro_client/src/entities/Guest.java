@@ -1,8 +1,12 @@
 package entities;
-/** A type of user describing a guest (not registered in the system)*/
-public class Guest extends User {
 
-	private static final long serialVersionUID = 1L;
+import java.io.Serializable;
+
+/** A type of user describing a guest (not registered in the system)*/
+public class Guest extends User implements Serializable {
+
+
+	private static final long serialVersionUID = -7924939766545340775L;
 
 	/**
 	 * Constructs a Guest user with the specified email and phone.

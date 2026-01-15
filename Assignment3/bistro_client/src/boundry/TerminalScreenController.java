@@ -54,7 +54,7 @@ public class TerminalScreenController implements IController {
 	 */
     @FXML
     void onHaveOrderClick(ActionEvent event) {
-    	ClientUI.console.switchScreen(this, event, "/boundry/terminalOrderManagementScreen.fxml",user);
+    	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/terminalOrderManagementScreen.fxml",user);
     }
 
     /**
@@ -63,7 +63,7 @@ public class TerminalScreenController implements IController {
      */
     @FXML
     void onDontHaveOrderClick(ActionEvent event) {
-    	ClientUI.console.switchScreen(this, event, "/boundry/ImmidiateArrival.fxml",user);
+    	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/ImmidiateArrival.fxml",user);
     }
  
 	/**
@@ -74,6 +74,6 @@ public class TerminalScreenController implements IController {
 	 */
     @FXML
     void OnLogoutClick(ActionEvent event) {
-    	ClientUI.console.switchScreen(this, event, "/boundry/loginScreen.fxml",null);
+    	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/loginScreen.fxml",null);
     }    
 }

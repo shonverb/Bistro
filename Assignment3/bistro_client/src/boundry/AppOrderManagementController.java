@@ -2,22 +2,26 @@ package boundry;
 
 import java.util.Optional;
 
-import entities.CancelRequest;
-import entities.LeaveTableRequest;
 import entities.User;
 import entities.UserType;
+import entities.requests.CancelRequest;
+import entities.requests.CheckConfCodeRequest;
+import entities.requests.LeaveTableRequest;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.TextField;
 /**
  * Controller class for managing orders in the application.
  */
 public class AppOrderManagementController implements IController {
+	
 	private User user;
     @FXML
     private Button backBtn;
@@ -33,6 +37,9 @@ public class AppOrderManagementController implements IController {
 
     @FXML
     private Button newOrderBtn;
+    
+    @FXML
+    private Button lostMyCodeBtn;
 
     @FXML
     void initialize() {
@@ -48,12 +55,13 @@ public class AppOrderManagementController implements IController {
     
     @FXML
     void onBackClick(ActionEvent event) {
-    	if((user.getType() == UserType.SUBSCRIBER) || (user.getType() == UserType.GUEST)) {
-			ClientUI.console.switchScreen(this, event, "/boundry/ClientScreen.fxml", user);
-		}
-		else {
-			ClientUI.console.switchScreen(this, event, "/boundry/WorkerScreen.fxml", user);
-		}
+//    	if((user.getType() == UserType.SUBSCRIBER) || (user.getType() == UserType.GUEST)) {
+//			ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/ClientScreen.fxml", user);
+//		}
+//		else {
+//			ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/WorkerScreen.fxml", user);
+//		}
+    	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/ClientScreen.fxml", user);
 	}
     
     /**
@@ -85,7 +93,7 @@ public class AppOrderManagementController implements IController {
     	else {
     		Alert alert = new Alert(AlertType.CONFIRMATION);
         	alert.setTitle("Confirmation");
-        	alert.setHeaderText("Your order will be deleted");
+        	alert.setHeaderText("Your order will be cancelled");
         	alert.setContentText("Are you sure you want to continue?");
         	Optional<ButtonType> result = alert.showAndWait();
         	if (result.isPresent() && result.get() == ButtonType.OK) {
@@ -94,6 +102,66 @@ public class AppOrderManagementController implements IController {
         	}
     	}
     }
+    
+	/**
+	 * Handles the action when the "Lost My Code" button is clicked. Prompts the
+	 * user for contact information and sends a request to check the confirmation code.
+	 * 
+	 * @param event The action event triggered by clicking the "Lost My Code" button.
+	 */
+    @FXML
+    void onLostMyCodeClick(ActionEvent event) {
+
+        String contact;
+
+        //GUEST
+        if (user.getType() == UserType.GUEST) {
+
+            TextField contactField = new TextField();
+            contactField.setPromptText("Enter phone or email used in the order");
+
+            Dialog<String> dialog = new Dialog<>();
+            dialog.setTitle("Find Your Order");
+            dialog.setHeaderText("Please enter your contact");
+
+            ButtonType confirmBtn = new ButtonType("Confirm", ButtonBar.ButtonData.OK_DONE);
+            dialog.getDialogPane().getButtonTypes().addAll(confirmBtn, ButtonType.CANCEL);
+            dialog.getDialogPane().setContent(contactField);
+
+            dialog.setResultConverter(btn -> {
+                if (btn == confirmBtn) {
+                    return contactField.getText();
+                }
+                return null;
+            });
+
+            Optional<String> result = dialog.showAndWait();
+
+            //user cancelled pop-up
+            if (result.isEmpty()) return;
+
+            contact = result.get().trim();
+
+            if (contact.isEmpty() || !OrderScreenController.isValidPhoneOrEmail(contact)) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error Occurred");
+                alert.setHeaderText("Invalid contact");
+                alert.setContentText(
+                    "Please enter a valid phone number or email\n" +
+                    "that you used when placing the order."
+                );
+                alert.showAndWait();
+                return;
+            }
+        }
+
+        //SUBSCRIBER
+        else {
+            contact = user.getEmail();
+        }
+
+        ClientUI.console.accept(new CheckConfCodeRequest(contact));
+    }   
     
     /**
      * Handles the action when the finish order button is clicked.
@@ -131,7 +199,7 @@ public class AppOrderManagementController implements IController {
 	 */
     @FXML
     void onNewOrderClick(ActionEvent event) {
-    	ClientUI.console.switchScreen(this, event, "/boundry/OrderScreen.fxml", user);
+    	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/OrderScreen.fxml", user);
 
     }
 

@@ -5,9 +5,9 @@ import java.time.LocalTime;
 import java.util.Optional;
 
 import bistro_client.BistroClient;
-import entities.JoinWaitlistRequest;
 import entities.User;
 import entities.UserType;
+import entities.requests.JoinWaitlistRequest;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -121,7 +121,7 @@ public class waitListController implements IController {
             // Prepare the data again for the second attempt
             String guests = guestsNumberTxt.getText().trim();
             String contactInput = identifyText.getText().trim();
-            String subscriberId = (user.getType() == UserType.SUBSCRIBER) ? 
+            String subscriberId = (user.getType() != UserType.GUEST) ? 
                                  String.valueOf(((entities.Subscriber)user).getSubscriberID()) : "0";
             String finalContact = (user.getType() == UserType.SUBSCRIBER && contactInput.isEmpty()) ? 
                                  user.getPhone() : contactInput;
@@ -154,7 +154,7 @@ public class waitListController implements IController {
     @FXML
     void OnBackBtnClick(ActionEvent event) {
         try {
-            ClientUI.console.switchScreen(this, event, "/boundry/TerminalScreen.fxml", user);
+            ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/TerminalScreen.fxml", user);
         } catch (Exception e) {
             resultTxt.setText("Error switching screens.");
         }
