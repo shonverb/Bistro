@@ -169,7 +169,7 @@ public class DBconnector {
 	 * 
 	 * @return The resulting string, the next order number
 	 */
-	public String OrderNumber() {
+	public synchronized String OrderNumber() {
 		Connection conn = ConnectionPool.getInstance().getConnection();
 		try (PreparedStatement stmt = conn
 				.prepareStatement("SELECT IFNULL(MAX(order_number), 0) + 1 AS next_num FROM `order`");
@@ -373,9 +373,7 @@ public class DBconnector {
 		HashMap<Table, Order> currentBistro = new HashMap<>();
 		try {
 			PreparedStatement stmt = conn.prepareStatement(
-					"SELECT * FROM `table` WHERE ? >= active_from AND (? <= active_to OR active_to IS NULL);");
-			stmt.setDate(1, Date.valueOf(LocalDate.now()));
-			stmt.setDate(2, Date.valueOf(LocalDate.now()));
+					"SELECT * FROM `table` WHERE pending_removal = FALSE;");
 			ResultSet rs = stmt.executeQuery();
 			while (rs.next()) {
 				int id = rs.getInt("table_number");
@@ -700,84 +698,7 @@ public class DBconnector {
 
 	}
 
-	/**
-	 * the method gets the next table ID from the database
-	 * 
-	 * @return The next table ID
-	 */
-	private int getNextTableId() {
-		Connection conn = ConnectionPool.getInstance().getConnection();
-		try (PreparedStatement stmt = conn
-				.prepareStatement("SELECT IFNULL(MAX(table_number), 0) + 1 AS next_num FROM `table`");
-				ResultSet rs = stmt.executeQuery()) {
 
-			if (rs.next())
-				return rs.getInt(1);
-
-		} catch (SQLException e) {
-			e.printStackTrace();
-			System.out.println("ERROR:" + e.getMessage());
-		} finally {
-			ConnectionPool.getInstance().returnConnection(conn);
-		}
-
-		return -1;
-
-	}
-
-	/**
-	 * the method adds a new table to the database
-	 * 
-	 * @param req An AddTableRequest
-	 * @return true if the table was added successfully, false otherwise
-	 */
-	public boolean addNewTable(AddTableRequest req) {
-		Connection conn = ConnectionPool.getInstance().getConnection();
-		String query = req.getQuery();
-		try {
-			PreparedStatement stmt = conn.prepareStatement(query);
-			stmt.setInt(1, getNextTableId());
-			stmt.setInt(2, req.getCap());
-			if (stmt.executeUpdate() == 0) {
-				System.out.println("Execute Update was 0");
-				return false;
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-			System.out.println(e.getMessage());
-			return false;
-		} finally {
-			ConnectionPool.getInstance().returnConnection(conn);
-		}
-
-		return true;
-	}
-
-	/**
-	 * the method removes a table from the database
-	 * 
-	 * @param req A RemoveTableRequest
-	 * @return true if the table was removed successfully, false otherwise
-	 */
-	public boolean removeTable(RemoveTableRequest req) {
-		Connection conn = ConnectionPool.getInstance().getConnection();
-		String query = req.getQuery();
-		try {
-			PreparedStatement stmt = conn.prepareStatement(query);
-			stmt.setInt(1, req.getId());
-			if (stmt.executeUpdate() == 0) {
-				System.out.println("Execute Update was 0");
-				return false;
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-			System.out.println(e.getMessage());
-		} finally {
-			ConnectionPool.getInstance().returnConnection(conn);
-		}
-
-		return true;
-	}
 
 	/**
 	 * the method expires pending orders in the database
@@ -854,14 +775,12 @@ public class DBconnector {
 		Connection conn = ConnectionPool.getInstance().getConnection();
 		ArrayList<Table> tables = new ArrayList<>();
 		try {
-			PreparedStatement stmt = conn.prepareStatement("SELECT * FROM `table`;");
+			PreparedStatement stmt = conn.prepareStatement("SELECT * FROM `table` WHERE pending_removal = FALSE;");
 			ResultSet rs = stmt.executeQuery();
 			while (rs.next()) {
 				int id = rs.getInt("table_number");
 				int capacity = rs.getInt("number_of_seats");
-				LocalDate activeFrom = rs.getDate("active_from").toLocalDate();
-				LocalDate activeTo = (rs.getDate("active_to") == null) ? null : rs.getDate("active_to").toLocalDate();
-				tables.add(new Table(id, capacity, false, activeFrom, activeTo));
+				tables.add(new Table(id, capacity, false));
 			}
 			return tables;
 		} catch (SQLException e) {

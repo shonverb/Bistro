@@ -33,7 +33,7 @@ import javafx.scene.control.Alert.AlertType;
  * Controller class for the Bistro Management Screen. This class handles user
  * interactions and updates the UI accordingly.
  */
-public class BistroManagementScreenController implements IController{
+public class BistroManagementScreenController implements IController {
 	private User user;
 	@FXML private DatePicker datePicker;
 	@FXML private ComboBox<Integer> dayOfWeek;
@@ -48,7 +48,7 @@ public class BistroManagementScreenController implements IController{
 	@FXML private CheckBox closeBistroCheck;
     @FXML private TextField setTableCapText;
 
-    /**
+	/**
      * Initializes the controller class. This method is automatically called
      */
 	@FXML
@@ -65,20 +65,12 @@ public class BistroManagementScreenController implements IController{
 		            setText(null);
 		            setTextFill(Color.BLACK);
 		        } else {
-		            if (item.getActiveTo() != null) {
-		                setText("Table " + item.getId() + " (Scheduled for removal: " + item.getActiveTo() + ")");
-		                setTextFill(Color.RED);
-		            }else if(item.getActiveFrom().isAfter(LocalDate.now())) {
-		                setText("Table " + item.getId() + " (Scheduled to start operation: " + item.getActiveFrom() + ")");
-		                setTextFill(Color.BLUE);
-		            } else {
-		                // Normal table
-		                setText("Table " + item.getId() + " (Capacity: " + item.getCapacity() + ")");
-		                setTextFill(Color.BLACK);
+		        	// Normal table
+		            setText("Table " + item.getId() + " (Capacity: " + item.getCapacity() + ")");
+		            setTextFill(Color.BLACK);
 		            }
 		        }
-		    }		    		    
-		};
+		    };		    		    
 		currentTables.setCellFactory(cellFactory);
 		currentTables.setButtonCell(cellFactory.call(null));
 		ClientUI.console.accept(new GetAllTablesRequest());
@@ -92,13 +84,14 @@ public class BistroManagementScreenController implements IController{
         LocalDate maxDate = today.plusMonths(1);
 
         datePicker.setDayCellFactory(dp -> new DateCell() {
-            @Override
+
+	@Override
             public void updateItem(LocalDate date, boolean empty) {
                 super.updateItem(date, empty);
                 if (empty || date.isBefore(today) || date.isAfter(maxDate)) setDisable(true);
             }
-        });
-	}
+
+	});}
 
 	/**
 	 * Handles the confirm button click event. Validates input and sends appropriate
@@ -109,8 +102,8 @@ public class BistroManagementScreenController implements IController{
 	@FXML
 	void onConfirmClick(ActionEvent event) {
 		ArrayList<String> args = new ArrayList<>();
-    	boolean exceptionRaised = false;
-    	boolean hoursException = false;
+		boolean exceptionRaised = false;
+		boolean hoursException = false;
 		Integer day;
 		Integer open;
 		Integer close;
@@ -171,19 +164,19 @@ public class BistroManagementScreenController implements IController{
     		
     	if(exceptionRaised) {
 			Alert alert = new Alert(AlertType.ERROR);
-    		alert.setTitle("Error Occurred");
-    		alert.setHeaderText("Input Validation Failed");
-    		alert.setContentText("Please choose one from date and day of week");
-    		alert.showAndWait();
-    	}
-    	
-    	else if(hoursException) {
+			alert.setTitle("Error Occurred");
+			alert.setHeaderText("Input Validation Failed");
+			alert.setContentText("Please choose one from date and day of week");
+			alert.showAndWait();
+		}
+
+		else if (hoursException) {
 			Alert alert = new Alert(AlertType.ERROR);
-    		alert.setTitle("Error Occurred");
-    		alert.setHeaderText("Input Validation Failed");
-    		alert.setContentText("Please choose both opening hour and closing hour");
-    		alert.showAndWait();
-    	}
+			alert.setTitle("Error Occurred");
+			alert.setHeaderText("Input Validation Failed");
+			alert.setContentText("Please choose both opening hour and closing hour");
+			alert.showAndWait();
+		}
 	}
 
 	/**
@@ -195,42 +188,42 @@ public class BistroManagementScreenController implements IController{
 	@FXML
 	void onTablesBtnClick(ActionEvent event) throws InterruptedException {
 		try {
-			
-			if(removeTableCheck.isSelected()) {
+
+			if (removeTableCheck.isSelected()) {
 				Table selectedTable = currentTables.getValue();
-				if(selectedTable != null) {
+				if (selectedTable != null) {
 					ClientUI.console.accept(new RemoveTableRequest(selectedTable.getId()));
 					removeTableCheck.setSelected(false);
 				} else {
 					Alert alert = new Alert(AlertType.ERROR);
-		    		alert.setTitle("Error Occurred");
-		    		alert.setHeaderText("No Table Selected");
-		    		alert.setContentText("Please select a table to remove");
-		    		alert.showAndWait();
+					alert.setTitle("Error Occurred");
+					alert.setHeaderText("No Table Selected");
+					alert.setContentText("Please select a table to remove");
+					alert.showAndWait();
 				}
-			} 
-			
-			else if(!AddTableCapText.getText().isEmpty()) {
+			}
+
+			else if (!AddTableCapText.getText().isEmpty()) {
 				int capacity = Integer.parseInt(AddTableCapText.getText());
 				ClientUI.console.accept(new AddTableRequest(capacity));
 				AddTableCapText.clear();
-			} 
-			
-			else if(!setTableCapText.getText().isEmpty()) {
+			}
+
+			else if (!setTableCapText.getText().isEmpty()) {
 				Table selectedTable = currentTables.getValue();
-				if(selectedTable != null) {
+				if (selectedTable != null) {
 					int newCapacity = Integer.parseInt(setTableCapText.getText());
 					ClientUI.console.accept(new UpdateTableCapacityRequest(selectedTable.getId(), newCapacity));
 					setTableCapText.clear();
 				} else {
 					Alert alert = new Alert(AlertType.ERROR);
-		    		alert.setTitle("Error Occurred");
-		    		alert.setHeaderText("No Table Selected");
-		    		alert.setContentText("Please select a table to update its capacity");
-		    		alert.showAndWait();
+					alert.setTitle("Error Occurred");
+					alert.setHeaderText("No Table Selected");
+					alert.setContentText("Please select a table to update its capacity");
+					alert.showAndWait();
 				}
 			}
-			Thread.sleep(200);
+			Thread.sleep(500);
 			ClientUI.console.accept(new GetAllTablesRequest());
 		} catch (NumberFormatException e) {
 			Alert alert = new Alert(AlertType.ERROR);
@@ -258,22 +251,20 @@ public class BistroManagementScreenController implements IController{
 	 */
 	@Override
 	public void setResultText(Object result) {
-		if( result instanceof ArrayList<?>) {
-			
-			@SuppressWarnings("unchecked")
-			ArrayList<Table> tables = (ArrayList<Table>) result;
-			currentTables.getItems().clear();
-			for(Table t: tables) {
-				currentTables.getItems().add(t);
-			}
-		}
-		else {
-			Platform.runLater(()-> {
-			Alert alert = new Alert(AlertType.INFORMATION);
-			alert.setTitle("Operation Result");
-			alert.setHeaderText(null);
-			alert.setContentText((String)result);
-			alert.showAndWait();
+		if (result instanceof ArrayList<?>) {
+			Platform.runLater(() -> {
+				@SuppressWarnings("unchecked")
+			    ArrayList<Table> tables = (ArrayList<Table>) result;
+			    currentTables.getItems().clear();
+			    currentTables.getItems().addAll(tables); 
+			});
+		} else {
+			Platform.runLater(() -> {
+				Alert alert = new Alert(AlertType.INFORMATION);
+				alert.setTitle("Operation Result");
+				alert.setHeaderText(null);
+				alert.setContentText((String) result);
+				alert.showAndWait();
 			});
 		}
 	}
@@ -285,6 +276,6 @@ public class BistroManagementScreenController implements IController{
 	 */
 	@Override
 	public void setUser(User user) {
-		this.user = user;	
-	}	
+		this.user = user;
+	}
 }
