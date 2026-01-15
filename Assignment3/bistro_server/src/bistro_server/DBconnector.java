@@ -1179,7 +1179,7 @@ public class DBconnector {
 		    }
 		}
 
-		EmailService emailService = new EmailService();
+		EmailService emailService = EmailService.getInstance();
 		for(String email : cnl) {
 			if(email.contains("@")) {
 				String subject = "Order Cancellation Notice";
@@ -1326,7 +1326,7 @@ public class DBconnector {
 	        }
 	    }
 
-	    EmailService emailService = new EmailService();
+	    EmailService emailService = EmailService.getInstance();
 	    for (String contact : cnl) {
 	        if (contact.contains("@")) {
 	            String subject = "Order Cancellation Notice";
@@ -1384,7 +1384,7 @@ public class DBconnector {
 	        }
 	    }
 
-	    EmailService emailService = new EmailService();
+	    EmailService emailService = EmailService.getInstance();
 	    for (String contact : cnl) {
 	        if (contact.contains("@")) {
 	            String subject = "Order Cancellation Notice";
