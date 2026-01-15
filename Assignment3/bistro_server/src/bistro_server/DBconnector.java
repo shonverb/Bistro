@@ -23,7 +23,6 @@ import entities.Order;
 import entities.Subscriber;
 import entities.Table;
 import entities.User;
-import entities.requests.AddTableRequest;
 import entities.requests.CancelRequest;
 import entities.requests.ChangeHoursDayRequest;
 import entities.requests.CheckConfCodeRequest;
@@ -35,7 +34,6 @@ import entities.requests.LeaveTableRequest;
 import entities.requests.LoginRequest;
 import entities.requests.ReadRequest;
 import entities.requests.RegisterRequest;
-import entities.requests.RemoveTableRequest;
 import entities.requests.Request;
 import entities.requests.ShowTakenSlotsRequest;
 import entities.requests.WriteHoursDateRequest;
@@ -1181,7 +1179,7 @@ public class DBconnector {
 		    }
 		}
 
-		EmailService emailService = new EmailService();
+		EmailService emailService = EmailService.getInstance();
 		for(String email : cnl) {
 			if(email.contains("@")) {
 				String subject = "Order Cancellation Notice";
@@ -1328,7 +1326,7 @@ public class DBconnector {
 	        }
 	    }
 
-	    EmailService emailService = new EmailService();
+	    EmailService emailService = EmailService.getInstance();
 	    for (String contact : cnl) {
 	        if (contact.contains("@")) {
 	            String subject = "Order Cancellation Notice";
@@ -1386,7 +1384,7 @@ public class DBconnector {
 	        }
 	    }
 
-	    EmailService emailService = new EmailService();
+	    EmailService emailService = EmailService.getInstance();
 	    for (String contact : cnl) {
 	        if (contact.contains("@")) {
 	            String subject = "Order Cancellation Notice";
