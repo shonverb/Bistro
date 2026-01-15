@@ -26,6 +26,7 @@ CREATE TABLE `day` (
   `day_of_week` int NOT NULL,
   `open_hour` time DEFAULT NULL,
   `close_hour` time DEFAULT NULL,
+  `status` enum('OPEN','CLOSE') DEFAULT NULL,
   PRIMARY KEY (`day_of_week`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -36,7 +37,7 @@ CREATE TABLE `day` (
 
 LOCK TABLES `day` WRITE;
 /*!40000 ALTER TABLE `day` DISABLE KEYS */;
-INSERT INTO `day` VALUES (2,'07:00:00','19:00:00'),(5,'07:00:00','20:00:00');
+INSERT INTO `day` VALUES (1,'08:00:00','20:00:00','OPEN'),(2,'08:00:00','20:00:00','OPEN'),(3,'08:00:00','20:00:00','OPEN'),(4,'08:00:00','20:00:00','OPEN'),(5,'08:00:00','20:00:00','OPEN'),(6,'08:00:00','14:00:00','OPEN'),(7,'00:00:00','00:00:00','CLOSE');
 /*!40000 ALTER TABLE `day` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -49,4 +50,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-01-14 17:20:07
+-- Dump completed on 2026-01-15  9:52:56

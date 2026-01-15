@@ -26,6 +26,7 @@ CREATE TABLE `date` (
   `specific_date` date NOT NULL,
   `open_hour` time DEFAULT NULL,
   `close_hour` time DEFAULT NULL,
+  `status` enum('OPEN','CLOSE') DEFAULT NULL,
   PRIMARY KEY (`specific_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -36,7 +37,7 @@ CREATE TABLE `date` (
 
 LOCK TABLES `date` WRITE;
 /*!40000 ALTER TABLE `date` DISABLE KEYS */;
-INSERT INTO `date` VALUES ('2026-01-10','08:00:00','20:00:00'),('2026-01-14','08:00:00','20:00:00'),('2026-01-21','06:00:00','07:00:00'),('2026-01-22','05:00:00','06:00:00'),('2026-01-23','05:00:00','06:00:00');
+INSERT INTO `date` VALUES ('2026-01-21','05:00:00','07:00:00','CLOSE'),('2026-02-14','10:00:00','23:00:00','OPEN'),('2026-03-01','08:00:00','16:00:00','OPEN'),('2026-04-01','00:00:00','00:00:00','CLOSE');
 /*!40000 ALTER TABLE `date` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -49,4 +50,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-01-14 17:20:07
+-- Dump completed on 2026-01-15  9:52:56
