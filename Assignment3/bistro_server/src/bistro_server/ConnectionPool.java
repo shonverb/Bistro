@@ -71,7 +71,7 @@ public class ConnectionPool {
     }
 
     /**
-     * Returns a connection to the pool. call this in a 'finally' block!
+     * Returns a connection to the pool.
      */
     public void returnConnection(Connection conn) {
         if (conn != null) {

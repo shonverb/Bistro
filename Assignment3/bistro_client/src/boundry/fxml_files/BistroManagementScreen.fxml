@@ -25,6 +25,7 @@
             <ComboBox fx:id="openHour" layoutX="20.0" layoutY="225.0" prefWidth="150.0" promptText="Opening Hour" />
             <ComboBox fx:id="closeHour" layoutX="190.0" layoutY="225.0" prefWidth="150.0" promptText="Closing Hour" />
             <Button fx:id="confirm" layoutX="20.0" layoutY="330.0" mnemonicParsing="false" onAction="#onConfirmClick" prefWidth="320.0" text="Save Hours Changes" />
+            <CheckBox fx:id="closeBistroCheck" layoutX="28.0" layoutY="281.0" mnemonicParsing="false" text="Close Bistro On This Day" />
          </children>
       </Pane>
       
