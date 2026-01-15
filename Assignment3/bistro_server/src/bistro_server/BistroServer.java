@@ -34,7 +34,7 @@ import entities.requests.UpdateTableCapacityRequest;
 import entities.requests.WriteRequest;
 import ocsf.server.AbstractServer;
 import ocsf.server.ConnectionToClient;
-/**The server, extending the abstract server*/
+/**The server, extending the AbstractServer*/
 public class BistroServer extends AbstractServer {
      final public static int DEFAULT_PORT = 5556;
      final public static int BILL = 100;
