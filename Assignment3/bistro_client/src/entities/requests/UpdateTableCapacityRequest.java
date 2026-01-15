@@ -6,9 +6,8 @@ package entities.requests;
  */
 public class UpdateTableCapacityRequest extends Request {
 	private static final long serialVersionUID = 2136807209259641605L;
-	private RemoveTableRequest removeReq;
-	private AddTableRequest addReq;
-
+	private int tableId;
+	private int newCap;
 	/**
 	 * Constructs an UpdateTableCapacityRequest.
 	 * 
@@ -17,16 +16,16 @@ public class UpdateTableCapacityRequest extends Request {
 	 */
 	public UpdateTableCapacityRequest(int tableId, int newCap) {
 		super(RequestType.UPDATE_TABLE_CAPACITY, "");
-		removeReq = new RemoveTableRequest(tableId);
-		addReq = new AddTableRequest(newCap);
+		this.tableId = tableId;
+		this.newCap = newCap;
 	}
 	
-	public RemoveTableRequest getRemoveReq() {
-		return removeReq;
+	public int getTableId() {
+		return tableId;
 	}
 	
-	public AddTableRequest getAddReq() {
-		return addReq;
+	public int getnewCap() {
+		return newCap;
 	}
 
 }

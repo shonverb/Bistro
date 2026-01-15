@@ -48,8 +48,13 @@ public class BistroServer extends AbstractServer {
      private static List<Table> tables;
      /**A map that holds the request handlers for each request type*/
     private HashMap<RequestType,RequestHandler> handlers;
-
+    
+    /**A map that holds the state of the restaurant*/
     private HashMap<Table,Order> currentBistro;
+    
+    private TableManager tableManager;
+    
+    
     public static LocalDateTime dateTime = LocalDateTime.of(LocalDate.of(2026, 1, 21), LocalTime.of(12, 00));
     
     public static final DateTimeFormatter DT_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -62,12 +67,12 @@ public class BistroServer extends AbstractServer {
      */
     public BistroServer(int port) {
         super(port);
-        currentBistro = new HashMap<>();
         dbcon = new DBconnector();
         clients = Collections.synchronizedList(new ArrayList<>());
         currentBistro = dbcon.getCurrentBistroState();
         tables = dbcon.getAllTables();
         handlers = new HashMap<>();
+        tableManager = new TableManager(this);
         handlers.put(RequestType.WRITE_ORDER, this::addNewOrder);
         handlers.put(RequestType.READ_ORDER, dbcon::getOrder);
         handlers.put(RequestType.LOGIN_REQUEST, dbcon::checkLogin);
@@ -356,7 +361,9 @@ public class BistroServer extends AbstractServer {
     protected List<Table> sortTables(Set <Table> tableSet, boolean copyCurrentBistroState) {
 		List<Table> tableList = new ArrayList<>();
 		for (Table t : tableSet) {
-			tableList.add(new Table(t.getId(), t.getCapacity(), (copyCurrentBistroState) ? t.isTaken(): false ));
+			if(!t.pendingRemoval()) {
+				tableList.add(new Table(t.getId(), t.getCapacity(), (copyCurrentBistroState) ? t.isTaken(): false ));
+			}
 		}
 		tableList.sort(null);
 		return tableList;
@@ -624,9 +631,17 @@ public class BistroServer extends AbstractServer {
 		for (Entry<Table, Order> entry : currentBistro.entrySet()) {
 			Order order = entry.getValue();
 			if (order != null && order.getConfirmationCode().equals(confcode)&& order.getSittingtime()!=null) {
-				currentBistro.put(entry.getKey(), null);
-				entry.getKey().setTaken(false);
-	        	dbcon.putOrderToTable(order.getOrderNumber(), entry.getKey().getId(), false);
+	        	
+				if(entry.getKey().pendingRemoval()) {
+	        		tableManager.hardDeleteTable(entry.getKey().getId());
+	        	}
+	        	
+	        	else{
+	        		currentBistro.put(entry.getKey(), null);
+	        		entry.getKey().setTaken(false);
+		        	dbcon.putOrderToTable(order.getOrderNumber(), entry.getKey().getId(), false);
+	        	}
+				
 				String userType = dbcon.closeOrder(req);
 				
 				if(userType == null) {
@@ -655,12 +670,10 @@ public class BistroServer extends AbstractServer {
 	 */
 	public String addTable(Request r) {
 		AddTableRequest req = (AddTableRequest)r;
-		if(dbcon.addNewTable(req)) {
-			return "new Table with " +req.getCap() +" spots added sucessfully, action will take effect in the next month";
+		if(tableManager.addNewTable(req)) {
+			return "New Table added successfully!";
 		}
-		else {
-			return "ERROR: new Table could not be added";
-		}
+		return "Could not add new table";
 	}
 
 	/**
@@ -671,27 +684,13 @@ public class BistroServer extends AbstractServer {
 	 */
 	public String removeTable(Request r) {
 		RemoveTableRequest req = (RemoveTableRequest)r;
-		if(dbcon.removeTable(req)) {
-			return "Table number " +req.getId() + " was removed sucessfully, action will take effect in the next month"; 
-		}
-		return "ERROR: table could not be removed";
+		return tableManager.removeTable(req);
 	}
-
-	/**
-	 * * Handles updating a table's capacity
-	 * 
-	 * @param r the UpdateTableCapacityRequest containing the table details
-	 * @return a message indicating success or failure
-	 */
+	
+	
 	public String updateTable(Request r) {
 		UpdateTableCapacityRequest req = (UpdateTableCapacityRequest)r;
-		if(!dbcon.removeTable(req.getRemoveReq())) {
-			return "ERROR: updating the table failed";
-		}
-		if(!dbcon.addNewTable(req.getAddReq())) {
-			return "ERROR: updating the table failed";
-		}
-		return "Updated table number " +req.getRemoveReq().getId() + " to " +req.getAddReq().getCap() + " sucessfully"; 
+		return tableManager.updateTableCapacity(req.getTableId(), req.getnewCap());
 	}
 
 	/**
@@ -791,11 +790,25 @@ public class BistroServer extends AbstractServer {
 		}
 		else {
 			 toSend = "Potential Confirmation codes has been sent to your email.";
-			 EmailService emailService = new EmailService();
+			 EmailService emailService = EmailService.getInstance();
 			 emailService.sendEmail(req.getcontact(), "Bistro Management - Confirmation Code Inquiry", "Potential Confirmation codes found: " + res);
 		}
 
 		return toSend;
+	}
+	
+	public void refreshCurrentState() {
+		currentBistro = dbcon.getCurrentBistroState();
+	}
+	
+	@Override
+	public void serverClosed() {
+		try {
+			ConnectionPool.getInstance().shutdown();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
 	}
 }
 

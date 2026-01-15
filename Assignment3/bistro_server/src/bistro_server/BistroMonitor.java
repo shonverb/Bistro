@@ -12,6 +12,7 @@ import java.util.Set;
 import entities.Order;
 import entities.Table;
 import entities.requests.CancelRequest;
+import entities.requests.RemoveTableRequest;
 import entities.requests.ShowTakenSlotsRequest;
 
 /**
@@ -21,7 +22,6 @@ import entities.requests.ShowTakenSlotsRequest;
 public class BistroMonitor implements Runnable {
 	private BistroServer server;
 	private Map<Order, LocalDateTime> pending;
-	private static final EmailService emailService = new EmailService();
 	/**
 	 * Constructor for BistroMonitor.
 	 * 
@@ -128,6 +128,10 @@ public class BistroMonitor implements Runnable {
 	            		table.setTaken(false);
 	            		currentBistro.put(table, null);
 	    	        	server.dbcon.putOrderToTable(order.getOrderNumber(), table.getId(), false);
+	    	        	if(table.pendingRemoval()) {
+	    	        		table.setPendingRemoval(false);
+	    	        		server.removeTable(new RemoveTableRequest(table.getId()));
+	    	        	}
 	            		break;
 	            	}
 	            }
@@ -283,6 +287,7 @@ public class BistroMonitor implements Runnable {
 	 * @param contact  The customer's contact information.
 	 */
 	private void sendEmailOrderInTwoHours(String orderNum,String contact) {
+		EmailService emailService = EmailService.getInstance();
 		String subject = String.format("Reminder: Your reservation at The Bistro (Order #%s)", orderNum);
 		String content = String.format(
 			    "Hello,\n\n" +
@@ -304,6 +309,7 @@ public class BistroMonitor implements Runnable {
 	 * @param contact  The customer's contact information.
 	 */
 	private void sendEmailOrderExpired(String orderNum,String contact) {
+		EmailService emailService = EmailService.getInstance();
 		String subject = String.format("Reminder: Your reservation at The Bistro (Order #%s)", orderNum);
 		String content = String.format(
 			    "Hello,\n\n" +
@@ -325,6 +331,7 @@ public class BistroMonitor implements Runnable {
 	 * @param contact  The customer's contact information.
 	 */
 	private void sendEmailTimeExceeded(String orderNum, String contact) {
+		EmailService emailService = EmailService.getInstance();
 		String subject = String.format("Reminder: Your reservation at The Bistro (Order #%s)", orderNum);
 		String content = String.format(
 			    "Hello,\n\n" +
@@ -347,6 +354,7 @@ public class BistroMonitor implements Runnable {
 	 * @param tableNumber    The table number assigned.
 	 */
 	public void sendTableReadyEmail(String recipientEmail, String orderNum, int tableNumber) {
+		EmailService emailService = EmailService.getInstance();
 	    String subject = String.format("Good news! Your table is ready (Order #%s)", orderNum);
 	    
 	    String body = String.format(
