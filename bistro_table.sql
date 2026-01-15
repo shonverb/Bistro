@@ -25,6 +25,9 @@ DROP TABLE IF EXISTS `table`;
 CREATE TABLE `table` (
   `table_number` int NOT NULL,
   `number_of_seats` int DEFAULT NULL,
+  `active_from` date DEFAULT (curdate()),
+  `active_to` date DEFAULT NULL,
+  `current_order` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`table_number`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -35,7 +38,7 @@ CREATE TABLE `table` (
 
 LOCK TABLES `table` WRITE;
 /*!40000 ALTER TABLE `table` DISABLE KEYS */;
-INSERT INTO `table` VALUES (1,2);
+INSERT INTO `table` VALUES (1,2,'2026-01-05',NULL,0);
 /*!40000 ALTER TABLE `table` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -48,4 +51,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-01-02 12:55:11
+-- Dump completed on 2026-01-14 17:20:07
