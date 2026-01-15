@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import entities.User;
 import entities.requests.AddTableRequest;
 import entities.requests.ChangeHoursDayRequest;
+import entities.requests.CloseDateRequest;
+import entities.requests.CloseDayRequest;
 import entities.requests.GetAllTablesRequest;
 import entities.requests.RemoveTableRequest;
 import entities.requests.UpdateTableCapacityRequest;
@@ -33,28 +35,18 @@ import javafx.scene.control.Alert.AlertType;
  */
 public class BistroManagementScreenController implements IController {
 	private User user;
-	@FXML
-	private DatePicker datePicker;
-	@FXML
-	private ComboBox<Integer> dayOfWeek;
-	@FXML
-	private ComboBox<Integer> openHour;
-	@FXML
-	private ComboBox<Integer> closeHour;
-	@FXML
-	private Button confirm;
-	@FXML
-	private Button tablesBtn;
-	@FXML
-	private Button backBtn;
-	@FXML
-	private TextField AddTableCapText;
-	@FXML
-	private ComboBox<Table> currentTables;
-	@FXML
-	private CheckBox removeTableCheck;
-	@FXML
-	private TextField setTableCapText;
+	@FXML private DatePicker datePicker;
+	@FXML private ComboBox<Integer> dayOfWeek;
+	@FXML private ComboBox<Integer> openHour;
+	@FXML private ComboBox<Integer> closeHour;
+	@FXML private Button confirm;
+	@FXML private Button tablesBtn;
+	@FXML private Button backBtn;
+	@FXML private TextField AddTableCapText;
+	@FXML private ComboBox<Table> currentTables;
+	@FXML private CheckBox removeTableCheck;
+	@FXML private CheckBox closeBistroCheck;
+    @FXML private TextField setTableCapText;
 
 	/**
      * Initializes the controller class. This method is automatically called
@@ -115,40 +107,62 @@ public class BistroManagementScreenController implements IController {
 		Integer day;
 		Integer open;
 		Integer close;
-		try {
-			LocalDate date = datePicker.getValue();
-			day = dayOfWeek.getValue();
-			open = openHour.getValue();
-			close = closeHour.getValue();
-
-			if ((date != null && day != null) || (date == null && day == null)) {
-				exceptionRaised = true;
-			}
-
-			else if (open == null || close == null) {
-				hoursException = true;
-			}
-
-			else if (date != null && day == null) {
-				args.add(date.toString());
-				args.add(open.toString());
-				args.add(close.toString());
-				WriteHoursDateRequest r = new WriteHoursDateRequest(args.get(0), args.get(1), args.get(2));
-				ClientUI.console.accept(r);
-			}
-
-			else if (date == null && day != null) {
-				args.add(day.toString());
-				args.add(open.toString());
-				args.add(close.toString());
-				ChangeHoursDayRequest r = new ChangeHoursDayRequest(args.get(0), args.get(1), args.get(2));
-				ClientUI.console.accept(r);
-			}
-		} catch (Exception e) {
-			exceptionRaised = true;
-		}
-
-		if (exceptionRaised) {
+		String status = "OPEN";
+    	try {
+        	LocalDate date = datePicker.getValue();
+    		day = dayOfWeek.getValue();
+    		open = openHour.getValue();
+    		close = closeHour.getValue();
+    		
+    		if (!closeBistroCheck.isSelected()) {
+    		
+	    		if((date != null && day != null) || (date == null && day == null)) {
+	    			exceptionRaised = true;
+	    		}
+	    		
+	    		else if(open == null || close == null) {
+	    			hoursException = true;
+	    		}
+	    			    		
+	    		else if (date != null && day == null){
+					args.add(date.toString());
+					args.add(open.toString());
+					args.add(close.toString());
+					args.add(status);
+					WriteHoursDateRequest r = new WriteHoursDateRequest(args.get(0),args.get(1),args.get(2),args.get(3));
+					ClientUI.console.accept(r);
+	    		}
+	    		
+	    		else if (date == null && day != null) {
+	    			args.add(day.toString());
+	    			args.add(open.toString());
+	    			args.add(close.toString());
+	    			args.add(status);
+	    			ChangeHoursDayRequest r = new ChangeHoursDayRequest(args.get(0),args.get(1),args.get(2),args.get(3));
+	    			ClientUI.console.accept(r);
+	    		}
+    		}
+    		
+    		else {	    		
+	    		if (date != null && day == null){
+	    			args.add(date.toString());
+	    			CloseDateRequest r = new CloseDateRequest(args.get(0));
+	    			ClientUI.console.accept(r);
+	    			closeBistroCheck.setSelected(false);
+	    		}
+    			
+	    		else if (date == null && day != null) {
+					args.add(day.toString());
+					CloseDayRequest r = new CloseDayRequest(args.get(0));
+					ClientUI.console.accept(r);
+					closeBistroCheck.setSelected(false);
+	    		}
+    		}
+    	}catch (Exception e) {
+    		exceptionRaised = true;
+    	}
+    		
+    	if(exceptionRaised) {
 			Alert alert = new Alert(AlertType.ERROR);
 			alert.setTitle("Error Occurred");
 			alert.setHeaderText("Input Validation Failed");

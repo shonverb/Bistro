@@ -39,7 +39,7 @@ CREATE TABLE `user` (
 
 LOCK TABLES `user` WRITE;
 /*!40000 ALTER TABLE `user` DISABLE KEYS */;
-INSERT INTO `user` VALUES ('dean zarhi',1,'deanza','0501234123','dz@gmail.com','CLIENT'),('hod vakrat',123,'compi','0506421020','hav@gmail.com','MANAGER');
+INSERT INTO `user` VALUES ('dean zarhi',1,'deanza','0501234123','dz@gmail.com','CLIENT'),('refael biton',2,'rafa','0547909190','ref@gmail.com','EMPLOYEE'),('hod vakrat',3,'compi','0506421020','vakrat@gmail.com','MANAGER'),('snajcj aksd',130823,'bla','0506421020','hod@vak.com',NULL),('leon leonid',197392,'compipompi','0506421020','hod@val.com','CLIENT'),('kafj aksfj',421827,'klef','0507894561','name@walla.com','CLIENT'),('shon verbitzki',429173,'verb','050555111','shonson',NULL),('bla blabla',843428,'king','0501234567','name@gmail.com','CLIENT'),('check checking',923949,'checker','0506421020','hod@vak',NULL),('check checking',978294,'checker','0506421020','hod@vak',NULL);
 /*!40000 ALTER TABLE `user` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -52,4 +52,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-01-02 12:55:11
+-- Dump completed on 2026-01-14 17:20:06

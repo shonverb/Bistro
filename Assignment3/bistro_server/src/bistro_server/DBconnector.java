@@ -26,6 +26,8 @@ import entities.User;
 import entities.requests.CancelRequest;
 import entities.requests.ChangeHoursDayRequest;
 import entities.requests.CheckConfCodeRequest;
+import entities.requests.CloseDateRequest;
+import entities.requests.CloseDayRequest;
 import entities.requests.GetReportsRequest;
 import entities.requests.GetUserActiveOrdersRequest;
 import entities.requests.LeaveTableRequest;
@@ -596,7 +598,8 @@ public class DBconnector {
 		try (PreparedStatement stmt = conn.prepareStatement(query)) {
 			stmt.setTime(1, Time.valueOf(openTime));
 			stmt.setTime(2, Time.valueOf(closeTime));
-			stmt.setString(3, req.getDay());
+			stmt.setString(3, req.getStatus());
+			stmt.setString(4, req.getDay());
 
 			int rowsUpdated = stmt.executeUpdate();
 			if (rowsUpdated > 0) {
@@ -675,6 +678,7 @@ public class DBconnector {
 			stmt.setDate(1, java.sql.Date.valueOf(req.getDate()));
 			stmt.setTime(2, java.sql.Time.valueOf(openTime));
 			stmt.setTime(3, java.sql.Time.valueOf(closeTime));
+			stmt.setString(4, req.getStatus());
 
 			int rowsInserted = stmt.executeUpdate();
 			if (rowsInserted > 0) {
@@ -1154,6 +1158,42 @@ public class DBconnector {
 	 * @throws SQLException
 	 */
 	private void cancelOrdersOutsideHours(Connection conn, String date, String openTime, String closeTime) throws SQLException{
+		List<String> cnl = new ArrayList<>();
+
+		String selectSql = """
+		    SELECT contact
+		    FROM `order`
+		    WHERE DATE(order_datetime) = ?
+		      AND (TIME(order_datetime) < ? OR TIME(order_datetime) >= ?)
+		      AND status IN ('OPEN', 'WAITING')
+		""";
+
+		try (PreparedStatement stmt = conn.prepareStatement(selectSql)) {
+		    stmt.setDate(1, Date.valueOf(date));
+		    stmt.setTime(2, Time.valueOf(openTime));
+		    stmt.setTime(3, Time.valueOf(closeTime));
+
+		    ResultSet rs = stmt.executeQuery();
+		    while (rs.next()) {
+		        cnl.add(rs.getString("contact"));
+		    }
+		}
+
+		EmailService emailService = new EmailService();
+		for(String email : cnl) {
+			if(email.contains("@")) {
+				String subject = "Order Cancellation Notice";
+				String body = "Dear Customer,\n\n" + "We regret to inform you that your order scheduled for " + date
+						+ " has been cancelled due to it being outside of our operating hours.\n"
+						+ "We apologize for any inconvenience this may cause and appreciate your understanding.\n\n"
+						+ "Best regards,\n" + "Bistro Team";
+				emailService.sendEmail(email, subject, body);
+			}
+			else {
+				ServerUI.updateInScreen("order cancelled notice sent to phone number " + email);
+			}
+		}
+		
 	    String sql = """
 	        UPDATE `order`
 	        SET status = 'CANCELLED'
@@ -1173,7 +1213,13 @@ public class DBconnector {
 	    }
 	}
 
-
+	/**
+	 * the method gets all confirmation codes of active orders for a specific user
+	 * from the database
+	 * 
+	 * @param r A GetUserActiveOrdersRequest
+	 * @return A list of confirmation codes
+	 */
 	public List<String> getUserConfCodes(GetUserActiveOrdersRequest r) {
 		Connection conn = ConnectionPool.getInstance().getConnection();
 		List<String> result = new ArrayList<>();
@@ -1193,4 +1239,177 @@ public class DBconnector {
 		return result;
 	}
 
+	/**
+	 * the method closes the restaurant for a specific day of the week in the
+	 * database
+	 * 
+	 * @param r A CloseDayRequest
+	 * @return The resulting string, a message to the user
+	 */
+	public String closeRestaurantByDay(Request r) {
+	    Connection conn = ConnectionPool.getInstance().getConnection();
+	    CloseDayRequest req = (CloseDayRequest) r;
+	    String dayOfWeek = req.getDay();
+	    String query = "UPDATE `day` SET status = 'CLOSE' WHERE day_of_week = ?";
+
+	    try (PreparedStatement stmt = conn.prepareStatement(query)) {
+	        stmt.setString(1, dayOfWeek);
+
+	        int rows = stmt.executeUpdate();
+	        if (rows > 0) {
+	        	cancelAllOrdersForDay(conn, Integer.parseInt(dayOfWeek));
+	            return "Restaurant closed for day " + dayOfWeek;
+	        }
+	        else
+	            return "No matching day found.";
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	        return "Error closing restaurant by day: " + e.getMessage();
+	    } finally {
+	        ConnectionPool.getInstance().returnConnection(conn);
+	    }
+	}
+
+	/**
+	 * the method closes the restaurant for a specific date in the database
+	 * 
+	 * @param r A CloseDateRequest
+	 * @return The resulting string, a message to the user
+	 */
+	public String closeRestaurantByDate(Request r) {
+	    Connection conn = ConnectionPool.getInstance().getConnection();
+	    CloseDateRequest req = (CloseDateRequest) r;
+	    String date = req.getDate();
+	    String query = "UPDATE `date` SET status = 'CLOSE' WHERE specific_date = ?";
+
+	    try (PreparedStatement stmt = conn.prepareStatement(query)) {
+	        stmt.setDate(1, java.sql.Date.valueOf(date));
+
+	        int rows = stmt.executeUpdate();
+	        if (rows > 0) {
+	        	cancelAllOrdersForDate(conn, date);
+	            return "Restaurant closed for date " + date;
+	        }
+	        else
+	            return "No matching date found.";
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	        return "Error closing restaurant by date: " + e.getMessage();
+	    } finally {
+	        ConnectionPool.getInstance().returnConnection(conn);
+	    }
+	}
+	
+	/**
+	 * the method cancels all orders for a specific date in the database
+	 * 
+	 * @param conn A database connection
+	 * @param date The specific date
+	 * @throws SQLException
+	 */
+	private void cancelAllOrdersForDate(Connection conn, String date) throws SQLException {
+	    List<String> cnl = new ArrayList<>();
+
+	    String selectSql = """
+	        SELECT contact
+	        FROM `order`
+	        WHERE DATE(order_datetime) = ?
+	          AND status IN ('OPEN', 'WAITING')
+	    """;
+
+	    try (PreparedStatement stmt = conn.prepareStatement(selectSql)) {
+	        stmt.setDate(1, Date.valueOf(date));
+
+	        ResultSet rs = stmt.executeQuery();
+	        while (rs.next()) {
+	            cnl.add(rs.getString("contact"));
+	        }
+	    }
+
+	    EmailService emailService = new EmailService();
+	    for (String contact : cnl) {
+	        if (contact.contains("@")) {
+	            String subject = "Order Cancellation Notice";
+	            String body =
+	                    "Dear Customer,\n\n" +
+	                    "We regret to inform you that your order scheduled for " + date +
+	                    " has been cancelled due to the restaurant being closed on this date.\n\n" +
+	                    "Best regards,\n" +
+	                    "Bistro Team";
+	            emailService.sendEmail(contact, subject, body);
+	        } else {
+	            ServerUI.updateInScreen(
+	                "Order cancelled notice sent to phone number " + contact
+	            );
+	        }
+	    }
+
+	    String updateSql = """
+	        UPDATE `order`
+	        SET status = 'CANCELLED'
+	        WHERE DATE(order_datetime) = ?
+	          AND status IN ('OPEN', 'WAITING')
+	    """;
+
+	    try (PreparedStatement stmt = conn.prepareStatement(updateSql)) {
+	        stmt.setDate(1, Date.valueOf(date));
+	        stmt.executeUpdate();
+	    }
+	}
+	
+	/**
+	 * the method cancels all orders for a specific day of the week in the database
+	 * 
+	 * @param conn      A database connection
+	 * @param dayOfWeek The specific day of the week
+	 * @throws SQLException
+	 */
+	private void cancelAllOrdersForDay(Connection conn, int dayOfWeek) throws SQLException {
+	    List<String> cnl = new ArrayList<>();
+
+	    String selectSql = """
+	        SELECT contact
+	        FROM `order`
+	        WHERE DAYOFWEEK(order_datetime) = ?
+	          AND order_datetime >= NOW()
+	          AND status IN ('OPEN', 'WAITING')
+	    """;
+
+	    try (PreparedStatement stmt = conn.prepareStatement(selectSql)) {
+	        stmt.setInt(1, dayOfWeek);
+
+	        ResultSet rs = stmt.executeQuery();
+	        while (rs.next()) {
+	            cnl.add(rs.getString("contact"));
+	        }
+	    }
+
+	    EmailService emailService = new EmailService();
+	    for (String contact : cnl) {
+	        if (contact.contains("@")) {
+	            String subject = "Order Cancellation Notice";
+	            String body =
+	                    "Dear Customer,\n\n" +
+	                    "We regret to inform you that your order has been cancelled " +
+	                    "due to the restaurant being closed on this day of the week.\n\n" +
+	                    "Best regards,\n" +
+	                    "Bistro Team";
+	            emailService.sendEmail(contact, subject, body);
+	        }
+	    }
+
+	    String updateSql = """
+	        UPDATE `order`
+	        SET status = 'CANCELLED'
+	        WHERE DAYOFWEEK(order_datetime) = ?
+	          AND order_datetime >= NOW()
+	          AND status IN ('OPEN', 'WAITING')
+	    """;
+
+	    try (PreparedStatement stmt = conn.prepareStatement(updateSql)) {
+	        stmt.setInt(1, dayOfWeek);
+	        stmt.executeUpdate();
+	    }
+	}
+	
 }

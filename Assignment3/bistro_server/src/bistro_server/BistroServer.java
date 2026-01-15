@@ -34,7 +34,7 @@ import entities.requests.UpdateTableCapacityRequest;
 import entities.requests.WriteRequest;
 import ocsf.server.AbstractServer;
 import ocsf.server.ConnectionToClient;
-/**The server, extending the abstract server*/
+/**The server, extending the AbstractServer*/
 public class BistroServer extends AbstractServer {
      final public static int DEFAULT_PORT = 5556;
      final public static int BILL = 100;
@@ -101,6 +101,8 @@ public class BistroServer extends AbstractServer {
         handlers.put(RequestType.GET_HOURS_DATE, dbcon::getAllDatesHours);
         handlers.put(RequestType.GET_HOURS_DAY, dbcon::getAllDaysHours);
         handlers.put(RequestType.GET_MAX_TABLE, this::getMaxTable);
+        handlers.put(RequestType.CLOSE_DATE, dbcon::closeRestaurantByDate);
+        handlers.put(RequestType.CLOSE_DAY, dbcon::closeRestaurantByDay);
         
         ConnectionPool.getInstance();
         initWaitingLists();
