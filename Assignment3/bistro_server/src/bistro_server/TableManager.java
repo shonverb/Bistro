@@ -23,8 +23,6 @@ public class TableManager {
 
     /**
      * Adds a new table to the restaurant immediately.
-     * @param req The request containing the capacity for the new table.
-     * @return true if the table was added successfully, false otherwise.
      */
     public synchronized boolean addNewTable(AddTableRequest req) {
         Connection conn = ConnectionPool.getInstance().getConnection();
@@ -44,34 +42,24 @@ public class TableManager {
     }
 
     /**
-     * Attempts to remove a table from the restaurant.
-     * @param req The request containing the ID of the table to remove.
-     * @return A status message describing the outcome (Immediate removal, Deferred removal, or Error).
+     * Attempts to remove a table. Checks for conflicts and cancels them if necessary.
      */
     public String removeTable(RemoveTableRequest req) {
         int tableId = req.getId();
-        StringBuilder sb = new StringBuilder();
         Set<SimOrder> conflicts = new HashSet<>();
 
-        // Pass 0 to simulate full removal
+        // 1. Simulation Check
         if (!isSafeToReconfigure(tableId, 0, conflicts)) {
-            sb.append("Removing Table " + tableId + " conflicts with orders to be cancelled:");
-            for (SimOrder o : conflicts) {
-            	sb.append(" " + o.id);
-            	server.dbcon.cancelOrder(new CancelRequest(o.confirmationCode));
-            	if(o.contact.contains("@")) {
-        			EmailService.getInstance().sendEmail(o.contact, "Your Order (#"+(o.id)+")"
-        					,"Dear customer,\n\n unfortunately, due to changes in our tables capacity and/or quantity, we cannot accomodate you and your guests today,\nplease come again at a future time");
-            	}
-            	else {
-            		ServerUI.updateInScreen("Order number "+o.id+" cancelled because of table change");
-            	}
-            	
-            }
+            // 2. Handle Conflicts (Cancel & Email)
+            processCancellations(conflicts, "Removing Table " + tableId);
             
-        	
+            StringBuilder sb = new StringBuilder();
+            sb.append("Removing Table " + tableId + " conflicts with orders to be cancelled:");
+            for (SimOrder o : conflicts) sb.append(" " + o.id);
+            return sb.toString();
         }
         
+        // 3. Execution (Graceful vs Immediate)
         if (isTableOccupied(tableId)) {
             markForPendingRemoval(tableId);
             return "Table " + tableId + " marked for removal after current order.";
@@ -82,12 +70,7 @@ public class TableManager {
     }
 
     /**
-     * Updates the seating capacity of an existing table.
-     * If the capacity is being reduced, an an algorithm is run to ensure that future bookings assigned
-     * to this table can still be accommodated.
-     * * @param tableId The ID of the table to update.
-     * @param newCapacity The new number of seats.
-     * @return A string indicating success or failure.
+     * Updates table capacity. Checks for conflicts and cancels them if necessary.
      */
     public String updateTableCapacity(int tableId, int newCapacity) {
         Connection conn = ConnectionPool.getInstance().getConnection();
@@ -105,18 +88,12 @@ public class TableManager {
             if (newCapacity < oldCapacity) {
                 Set<SimOrder> conflicts = new HashSet<>();
                 if (!isSafeToReconfigure(tableId, newCapacity, conflicts)) {
+                    // Handle Conflicts (Cancel & Email) using the helper method
+                    processCancellations(conflicts, "Shrinking Table " + tableId);
+
                     StringBuilder sb = new StringBuilder();
                     sb.append("ABORT: Shrinking Table ").append(tableId).append(" conflicts with orders:");
-                    for (SimOrder o : conflicts) {
-                    	sb.append(" ").append(o.id);
-                    	server.dbcon.cancelOrder(new CancelRequest(o.confirmationCode));
-                    	if(o.contact.contains("@")) {
-                			EmailService.getInstance().sendEmail(o.contact, "Your Order (#"+(o.id)+")"
-                					,"Dear customer,\n\n unfortunately, due to changes in our tables capacity and/or quantity, we cannot accomodate you and your guests today,\nplease come again at a future time");
-                    	}else {
-                    		ServerUI.updateInScreen("Order number "+o.id+" cancelled because of table change");
-                    	}
-                    }
+                    for (SimOrder o : conflicts) sb.append(" ").append(o.id);
                     return sb.toString();
                 }
             }
@@ -137,20 +114,32 @@ public class TableManager {
         }
     }
     
-    // --- HELPER CLASSES & METHODS ---
+    // --- PRIVATE HELPERS ---
 
     /**
-     * Internal helper class to represent a table snapshot during simulation.
+     * Helper to handle the cancellation logic (DB update + Email/UI).
      */
+    private void processCancellations(Set<SimOrder> conflicts, String reason) {
+        for (SimOrder o : conflicts) {
+            server.dbcon.cancelOrder(new CancelRequest(o.confirmationCode));
+            if(o.contact != null && o.contact.contains("@")) {
+                EmailService.getInstance().sendEmail(o.contact, "Your Order (#"+(o.id)+")",
+                    "Dear customer,\n\nunfortunately, due to changes in our tables capacity ("+reason+"), " +
+                    "we cannot accomodate you and your guests today.\nPlease come again at a future time.");
+            } else {
+                ServerUI.updateInScreen("Order number "+o.id+" cancelled because of table change");
+            }
+        }
+    }
+
+    // --- SIMULATION LOGIC ---
+
     private static class SimTable {
         int id;
         int capacity;
         public SimTable(int id, int capacity) { this.id = id; this.capacity = capacity; }
     }
 
-    /**
-     * Internal helper class to represent an order snapshot during simulation.
-     */
     private static class SimOrder {
         int id;
         int guests;
@@ -158,24 +147,27 @@ public class TableManager {
         String confirmationCode;
         String contact;
         public SimOrder(int id, int guests, int currentTableId, String confirmationCode, String contact) {
-            this.id = id; this.guests = guests; this.currentTableId = currentTableId; this.confirmationCode=confirmationCode;
-            this.contact = contact;
+            this.id = id; this.guests = guests; this.currentTableId = currentTableId; 
+            this.confirmationCode=confirmationCode; this.contact = contact;
         }
+        // Needed for HashSet uniqueness
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            SimOrder simOrder = (SimOrder) o;
+            return id == simOrder.id;
+        }
+        @Override
+        public int hashCode() { return Objects.hash(id); }
     }
 
-    /**
-     * Simulates the restaurant state for all future time slots to check if a configuration change is safe.
-     * * @param targetTableId The table being modified/removed.
-     * @param proposedCapacity The new capacity (pass 0 if removing).
-     * @param conflicts A set to collect IDs of orders that would be displaced.
-     * @return true if the change is safe, false if it causes conflicts.
-     */
     private boolean isSafeToReconfigure(int targetTableId, int proposedCapacity, Set<SimOrder> conflicts) {
         Connection conn = ConnectionPool.getInstance().getConnection();
         boolean isSafe = true;
 
         try {
-            // A. Get all OTHER tables (We now need ID + Capacity)
+            // A. Get all OTHER tables
             List<SimTable> virtualTableList = new ArrayList<>();
             String sqlTables = "SELECT table_number, number_of_seats FROM `table` WHERE table_number != ? AND pending_removal = FALSE";
             try (PreparedStatement stmt = conn.prepareStatement(sqlTables)) {
@@ -185,9 +177,11 @@ public class TableManager {
                     virtualTableList.add(new SimTable(rs.getInt("table_number"), rs.getInt("number_of_seats")));
                 }
             }
+            
+            // Calculate Max Table Size (Current State)
             int maxTableSize = 0;
             for(SimTable t : virtualTableList) {
-            	if(t.capacity>maxTableSize) maxTableSize = t.capacity;
+                if(t.capacity > maxTableSize) maxTableSize = t.capacity;
             }
 
             // If Update: Add the target table back with NEW capacity
@@ -195,21 +189,24 @@ public class TableManager {
                 virtualTableList.add(new SimTable(targetTableId, proposedCapacity));
                 maxTableSize = Math.max(proposedCapacity, maxTableSize);
             }
-            String sqlWaiting = "SELECT confirmation_code, contact FROM `order` WHERE status = `WAITING` AND number_of_guests > "+maxTableSize;
-            try {
-            	Statement stmt = conn.createStatement();
-            	ResultSet rs = stmt.executeQuery(sqlWaiting);
-            	while(rs.next()) {
-            		server.dbcon.cancelOrder(new CancelRequest(rs.getString("confirmation_code")));
-            		String contact = rs.getString("contact");
-            		if(contact.contains("@")) {
-            			EmailService.getInstance().sendEmail(contact, "Your Order (#"+(Integer.parseInt(rs.getString("confirmation_code"))-1000)+")"
-            					,"Dear customer,\n\n unfortunately, due to changes in our tables capacity and/or quantity, we cannot accomodate you and your guests today,\nplease come again at a future time");
-            		}
-            	}
-            } catch (SQLException e) {
-            	e.printStackTrace();
+            
+            // --- LOGIC: WAITING ORDERS CHECK ---
+            // Cancel any WAITING order that is now strictly larger than our biggest table
+            String sqlWaiting = "SELECT confirmation_code, contact, order_number, number_of_guests FROM `order` WHERE status = 'WAITING' AND number_of_guests > " + maxTableSize;
+            try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sqlWaiting)) {
+                while(rs.next()) {
+                    // We treat these as conflicts too, effectively canceling them
+                    conflicts.add(new SimOrder(
+                        rs.getInt("order_number"), 
+                        rs.getInt("number_of_guests"), 
+                        0, 
+                        rs.getString("confirmation_code"), 
+                        rs.getString("contact")
+                    ));
+                    isSafe = false; // We found conflicts
+                }
             }
+
             // B. Get Time Slots
             List<Timestamp> timeSlots = new ArrayList<>();
             String sqlTimes = "SELECT DISTINCT order_datetime FROM `order` WHERE status = 'OPEN'";
@@ -233,21 +230,15 @@ public class TableManager {
         }
     }
 
-    /**
-     * Runs a two-phase algorithm to match orders to tables for a specific time slot.
-     * Phase 1: Secures tables for customers currently eating (Incumbents).
-     * Phase 2: Matches UPCOMING open orders to remaining tables.
-     */
     private boolean canFitReservationsInSlot(Connection conn, Timestamp startTime, List<SimTable> allTables, Set<SimOrder> conflicts) throws SQLException {
-        // 1. Fetch Orders AND their current table (if they are eating)
-        String sqlRes = "SELECT o.order_number, o.number_of_guests t.table_number, o.confirmation_code, o.contact " +
+        String sqlRes = "SELECT o.order_number, o.number_of_guests, t.table_number, o.confirmation_code, o.contact " +
                         "FROM `order` o " +
                         "LEFT JOIN `table` t ON t.current_order = o.order_number " +
                         "WHERE o.order_datetime <= ? AND DATE_ADD(o.order_datetime, INTERVAL 2 HOUR) > ? " +
                         "AND o.status ='OPEN'";
 
-        List<SimOrder> incumbents = new ArrayList<>(); // People eating NOW
-        List<SimOrder> upcoming = new ArrayList<>();   // Reservations coming later
+        List<SimOrder> incumbents = new ArrayList<>(); 
+        List<SimOrder> upcoming = new ArrayList<>();   
 
         try (PreparedStatement stmt = conn.prepareStatement(sqlRes)) {
             stmt.setTimestamp(1, startTime);
@@ -257,7 +248,7 @@ public class TableManager {
                 SimOrder order = new SimOrder(
                     rs.getInt("order_number"),
                     rs.getInt("number_of_guests"),
-                    rs.getInt("table_number"), 
+                    rs.getInt("table_number"), // 0 if null 
                     rs.getString("confirmation_code"),
                     rs.getString("contact")
                 );
@@ -271,11 +262,10 @@ public class TableManager {
             }
         }
 
-        // Create a mutable copy of tables for this slot
         List<SimTable> availableTables = new ArrayList<>(allTables);
         boolean slotSuccess = true;
 
-        // --- PHASE 1: Secure Incumbents (People Eating) ---
+        // --- PHASE 1: Secure Incumbents ---
         for (SimOrder seated : incumbents) {
             SimTable myTable = null;
             for (SimTable t : availableTables) {
@@ -293,15 +283,14 @@ public class TableManager {
                     slotSuccess = false;
                 }
             } else {
-                // If table is missing, it's the one being removed. 
+                // Graceful Removal: If table is missing, the incumbent is safe.
                 continue;
             }
         }
 
         // --- PHASE 2: Fit Upcoming Reservations ---
-        // We must check if the remaining tables can hold the reservations
-        upcoming.sort((o1, o2) -> Integer.compare(o2.guests, o1.guests)); // Largest groups first
-        availableTables.sort(Comparator.comparingInt(t -> t.capacity));   // Smallest tables first
+        upcoming.sort((o1, o2) -> Integer.compare(o2.guests, o1.guests)); 
+        availableTables.sort(Comparator.comparingInt(t -> t.capacity));   
 
         for (SimOrder res : upcoming) {
             boolean matched = false;
@@ -313,7 +302,7 @@ public class TableManager {
                 }
             }
             if (!matched) {
-                conflicts.add(res); // Conflict: Reservation has no table!
+                conflicts.add(res); 
                 slotSuccess = false;
             }
         }
@@ -321,7 +310,7 @@ public class TableManager {
         return slotSuccess;
     }    
     
-    // --- Utilities ---
+    // --- UTILITIES ---
     
     private boolean isTableOccupied(int tableId) {
         Map<Table, Order> currentBistro = server.getCurrentBistro();
@@ -361,9 +350,6 @@ public class TableManager {
         }
     }
 
-    /**
-     * Checks if a table is currently marked for pending removal.
-     */
     public boolean isPendingRemoval(int tableId) {
         Connection conn = ConnectionPool.getInstance().getConnection();
         String sql = "SELECT pending_removal FROM `table` WHERE table_number = ?";
