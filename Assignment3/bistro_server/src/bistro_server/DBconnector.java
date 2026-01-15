@@ -1494,6 +1494,5 @@ public class DBconnector {
 	        stmt.executeUpdate();
 	    }
 	}
-
-
+	
 }
