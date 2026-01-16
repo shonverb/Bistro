@@ -75,7 +75,7 @@ public class BistroServer extends AbstractServer {
 		instance = this;
 
 		dbcon = new DBconnector();
-		if(dbcon.bistroSchemaExists(ConnectionPool.USER,ConnectionPool.PASS)) {
+		if(dbcon.bistroSchemaExists(ConnectionPool.USER,ConnectionPool.PASS) && dbcon.AllTablesExist()) {
 			refreshServerState();
 			ConnectionPool.getInstance();
 			Thread monitorThread = new Thread(new BistroMonitor(this));
@@ -83,7 +83,7 @@ public class BistroServer extends AbstractServer {
 			monitorThread.start();
 		}
 		else {
-			System.out.println("Database schema 'bistro' does not exist.\nPlease seed the database using the button labeled 'Seed Database' .");
+			System.out.println("Database is not complete.\nPlease seed the database using the button labeled 'Seed Database' before launching the client.");
 		}
 		
 		clients = Collections.synchronizedList(new ArrayList<>());
