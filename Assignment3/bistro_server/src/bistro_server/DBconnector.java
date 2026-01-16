@@ -1539,6 +1539,8 @@ public class DBconnector {
 	        }
 	    } catch (SQLException e) {
 	        System.err.println("Error checking tables: " + e.getMessage());
+	    } finally {
+	    	ConnectionPool.getInstance().returnConnection(conn);
 	    }
 	    return false;
 	
