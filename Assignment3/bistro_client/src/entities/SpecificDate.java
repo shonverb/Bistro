@@ -12,7 +12,8 @@ public class SpecificDate implements Serializable{
 	private LocalDate date;
 	private Time open;
 	private Time close;
-
+	private boolean isClosed;
+	
 	/**
 	 * Constructs a SpecificDate with the given date, opening time, and closing
 	 * time.
@@ -37,5 +38,11 @@ public class SpecificDate implements Serializable{
 	
 	public Time getClose() {
 		return this.close;
+	}
+	public boolean isClosed() {
+		return isClosed;
+	}
+	public void setClosed(boolean isClosed) {
+		this.isClosed = isClosed;
 	}
 }

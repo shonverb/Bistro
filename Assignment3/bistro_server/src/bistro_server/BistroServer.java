@@ -296,8 +296,37 @@ public class BistroServer extends AbstractServer {
         ShowTakenSlotsRequest slotReq = new ShowTakenSlotsRequest(guests, req.getOrderDateTime());
         System.out.println("current Bistro in join waitlist before check: "+currentBistro.toString());
         Map<String,Integer> guestList = prepareGuestsInTimeList(slotReq, false);
+        
+        LocalDateTime orderDateTime = LocalDateTime.parse(req.getOrderDateTime(), DT_FMT);
+        LocalDate orderDate = orderDateTime.toLocalDate();
+        LocalTime orderTime = orderDateTime.toLocalTime();
+        int dayOfWeek = orderDate.getDayOfWeek().getValue();
+        dayOfWeek = (dayOfWeek % 7) + 1;
+        
         List<SpecificDate> dates = dbcon.getAllDatesHours(new GetHoursDateRequest());
-        List<Day> days = dbcon.getAllDaysHours(new GetHoursDayRequest());       
+        List<Day> days = dbcon.getAllDaysHours(new GetHoursDayRequest());
+        
+        for (SpecificDate d : dates) {
+			if (d.getDate().equals(orderDate)) {
+				if (d.isClosed()) {
+					return "The restaurant is closed on " + orderDate.toString() + ". Please choose another date.";
+				}
+				if (orderTime.isBefore(d.getOpen().toLocalTime()) || orderTime.isAfter(d.getClose().toLocalTime())) {
+					return "The restaurant is not open at " + orderTime.toString() + " on " + orderDate.toString() + ". Please choose another time.";
+				}
+			}
+		}
+        
+        for (Day d : days) {
+        	if (d.getDay() == dayOfWeek) {
+        			if (d.isClosed()) {
+        				return "The restaurant is closed on day " + dayOfWeek + ". Please choose another date.";
+        			}
+        			if (orderTime.isBefore(d.getOpen().toLocalTime()) || orderTime.isAfter(d.getClose().toLocalTime())) {
+						return "The restaurant is not open at " + orderTime.toString() + " on day " + dayOfWeek + ". Please choose another time.";
+					}
+        	}
+        }
         for (Order o : currentBistro.values()) {
         	if (o != null) {
         		guestList.remove(o.getConfirmationCode());

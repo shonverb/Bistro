@@ -806,7 +806,9 @@ public class DBconnector {
 				int day = rs.getInt("day_of_week");
 				Time open = rs.getTime("open_hour");
 				Time close = rs.getTime("close_hour");
-				days.add(new Day(day, open, close));
+				Day dayObj = new Day(day, open, close);
+				dayObj.setClosed(rs.getString("status").equals("CLOSE"));
+				days.add(dayObj);
 			}
 			return days;
 		} catch (SQLException e) {
@@ -834,7 +836,11 @@ public class DBconnector {
 				LocalDate date = rs.getDate("specific_date").toLocalDate();
 				Time open = rs.getTime("open_hour");
 				Time close = rs.getTime("close_hour");
-				dates.add(new SpecificDate(date, open, close));
+				boolean status = rs.getString("status").equals("CLOSE");
+				SpecificDate datesObj = new SpecificDate(date, open, close);
+				datesObj.setClosed(status);
+				dates.add(datesObj);
+				
 			}
 			return dates;
 		} catch (SQLException e) {
