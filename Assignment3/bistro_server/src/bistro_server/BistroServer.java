@@ -82,9 +82,20 @@ public class BistroServer extends AbstractServer {
 		scheduleManager = new ScheduleManager(orderManager);
 		reportManager = new ReportManager();
 		systemManager = new SystemManager();
-		
+		boolean firstRun = false;
+		if(!systemManager.bistroSchemaExists(ConnectionPool.USER, ConnectionPool.PASS)) {
+			firstRun = true;
+			systemManager.createBistroSchema(ConnectionPool.USER, ConnectionPool.PASS);
+			
+		}
+		if(!systemManager.AllTablesExist(ConnectionPool.USER, ConnectionPool.PASS)) {
+			firstRun = true;
+			systemManager.createAllTables(ConnectionPool.USER, ConnectionPool.PASS);
+		}
+		if (firstRun) {
+			System.out.println("First run detected. database schema and tables created with no data\nto populate initial tables, press the 'Seed Database' button in the server GUI.");
+		}
 
-//		dbcon = new DBconnector();
 		refreshServerState();
 		ConnectionPool.getInstance();
 		Thread monitorThread = new Thread(new BistroMonitor(this));
@@ -93,37 +104,50 @@ public class BistroServer extends AbstractServer {
 
 		clients = Collections.synchronizedList(new ArrayList<>());
 		handlers = new HashMap<>();
-		handlers.put(RequestType.WRITE_ORDER, this::addNewOrder);
+		
+		
+		//handlers for orderManager
 		handlers.put(RequestType.READ_ORDER, orderManager::getOrder);
+		handlers.put(RequestType.CANCEL_REQUEST, orderManager::cancelOrder);
+		handlers.put(RequestType.ORDER_HISTORY, orderManager::getOrderHistory);
+		handlers.put(RequestType.GET_ALL_ACTIVE_ORDERS, orderManager::getAllActiveOrders);
+		
+		//handlers for userManager
 		handlers.put(RequestType.LOGIN_REQUEST, userManager::checkLogin);
 		handlers.put(RequestType.REGISTER_REQUEST, userManager::addNewUser);
-		handlers.put(RequestType.CANCEL_REQUEST, orderManager::cancelOrder);
+		handlers.put(RequestType.UPDATE_DETAILS, userManager::updateDetails);
+		handlers.put(RequestType.GET_ALL_SUBSCRIBERS, userManager::getAllSubscribers);
+		
+		//handlers for scheduleManager
+		handlers.put(RequestType.CHANGE_HOURS_DAY, scheduleManager::changeHoursDay);
+		handlers.put(RequestType.WRITE_HOURS_DATE, scheduleManager::writeHoursDate);
+		handlers.put(RequestType.GET_HOURS_DATE, scheduleManager::getAllDatesHours);
+		handlers.put(RequestType.GET_HOURS_DAY, scheduleManager::getAllDaysHours);
+		handlers.put(RequestType.CLOSE_DATE, scheduleManager::closeRestaurantByDate);
+		handlers.put(RequestType.CLOSE_DAY, scheduleManager::closeRestaurantByDay);
+		
+		//handlers for this class
+		handlers.put(RequestType.WRITE_ORDER, this::addNewOrder);
 		handlers.put(RequestType.RESERVE_TABLE, this::reserveTableInAdvance);
 		handlers.put(RequestType.JOIN_WAITLIST, this::handleJoinWaitlist);
 		handlers.put(RequestType.LEAVE_WAITLIST, this::handleLeaveWaitlist);
 		handlers.put(RequestType.SPOT_WAITLIST, this::handleSpotWaitlist);
-		handlers.put(RequestType.UPDATE_DETAILS, userManager::updateDetails);
-		handlers.put(RequestType.ORDER_HISTORY, orderManager::getOrderHistory);
 		handlers.put(RequestType.CHECK_CONFCODE, this::getPotentialConfCodes);
-		handlers.put(RequestType.GET_ALL_ACTIVE_ORDERS, orderManager::getAllActiveOrders);
-		handlers.put(RequestType.GET_ALL_SUBSCRIBERS, userManager::getAllSubscribers);
 		handlers.put(RequestType.GET_TABLE, this::getTableForOrder);
 		handlers.put(RequestType.LEAVE_TABLE, this::leaveTable);
-		handlers.put(RequestType.CHANGE_HOURS_DAY, scheduleManager::changeHoursDay);
-		handlers.put(RequestType.WRITE_HOURS_DATE, scheduleManager::writeHoursDate);
 		handlers.put(RequestType.GET_ALL_TABLES, this::getTables);
 		handlers.put(RequestType.ADD_TABLE, this::addTable);
 		handlers.put(RequestType.REMOVE_TABLE, this::removeTable);
 		handlers.put(RequestType.UPDATE_TABLE_CAPACITY, this::updateTable);
 		handlers.put(RequestType.GET_LIVE_BISTRO_STATE, this::getLiveState);
-		handlers.put(RequestType.GET_REPORTS, reportManager::getReportsData);
 		handlers.put(RequestType.GET_USER_ACTIVE_ORDERS, this::getUserActiveOrders);
-		handlers.put(RequestType.GET_HOURS_DATE, scheduleManager::getAllDatesHours);
-		handlers.put(RequestType.GET_HOURS_DAY, scheduleManager::getAllDaysHours);
 		handlers.put(RequestType.GET_MAX_TABLE, this::getMaxTable);
-		handlers.put(RequestType.CLOSE_DATE, scheduleManager::closeRestaurantByDate);
-		handlers.put(RequestType.CLOSE_DAY, scheduleManager::closeRestaurantByDay);
 		handlers.put(RequestType.IS_BISTRO_OPEN, this::isBistroOpen);
+		
+		
+		
+		
+		handlers.put(RequestType.GET_REPORTS, reportManager::getReportsData);
 
 	}
 
