@@ -83,7 +83,7 @@ public class TableManager {
                 if (rs.next()) oldCapacity = rs.getInt("number_of_seats");
             }
             if (oldCapacity == -1) return "Error: Table not found.";
-
+            StringBuilder sb = new StringBuilder();
             // If shrinking, check safety
             if (newCapacity < oldCapacity) {
                 Set<SimOrder> conflicts = new HashSet<>();
@@ -91,10 +91,10 @@ public class TableManager {
                     // Handle Conflicts (Cancel & Email) using the helper method
                     processCancellations(conflicts, "Shrinking Table " + tableId);
 
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("ABORT: Shrinking Table ").append(tableId).append(" conflicts with orders:");
+                    
+                    sb.append("Shrinking Table ").append(tableId).append(" conflicts with orders:");
                     for (SimOrder o : conflicts) sb.append(" ").append(o.id);
-                    return sb.toString();
+                    
                 }
             }
 
@@ -105,7 +105,8 @@ public class TableManager {
                 stmt.executeUpdate();
             }
             server.refreshCurrentState();
-            return "Table updated.";
+            sb.append("\nTable updated.");
+            return sb.toString();
         } catch (SQLException e) {
             e.printStackTrace();
             return "Database Error.";
@@ -122,6 +123,12 @@ public class TableManager {
     private void processCancellations(Set<SimOrder> conflicts, String reason) {
         for (SimOrder o : conflicts) {
             server.dbcon.cancelOrder(new CancelRequest(o.confirmationCode));
+            if(o.status.equals("WAITING")) {
+				server.getRegularWaitlist().cancel(o.confirmationCode);
+			}
+            else if (o.status.equals("OPEN")) {
+            	server.getAdvanceWaitlist().cancel(o.confirmationCode);
+            }
             if(o.contact != null && o.contact.contains("@")) {
                 EmailService.getInstance().sendEmail(o.contact, "Your Order (#"+(o.id)+")",
                     "Dear customer,\n\nunfortunately, due to changes in our tables capacity ("+reason+"), " +
@@ -146,9 +153,10 @@ public class TableManager {
         int currentTableId; // 0 if not seated
         String confirmationCode;
         String contact;
-        public SimOrder(int id, int guests, int currentTableId, String confirmationCode, String contact) {
+        String status;
+        public SimOrder(int id, int guests, int currentTableId, String confirmationCode, String contact, String status) {
             this.id = id; this.guests = guests; this.currentTableId = currentTableId; 
-            this.confirmationCode=confirmationCode; this.contact = contact;
+            this.confirmationCode=confirmationCode; this.contact = contact; this.status = status; 
         }
         // Needed for HashSet uniqueness
         @Override
@@ -201,8 +209,10 @@ public class TableManager {
                         rs.getInt("number_of_guests"), 
                         0, 
                         rs.getString("confirmation_code"), 
-                        rs.getString("contact")
+                        rs.getString("contact"),
+                        "WAITING"
                     ));
+
                     isSafe = false; // We found conflicts
                 }
             }
@@ -250,7 +260,8 @@ public class TableManager {
                     rs.getInt("number_of_guests"),
                     rs.getInt("table_number"), // 0 if null 
                     rs.getString("confirmation_code"),
-                    rs.getString("contact")
+                    rs.getString("contact"),
+                    "OPEN"
                 );
                 
                 // SEPARATION LOGIC:
@@ -279,8 +290,8 @@ public class TableManager {
                 if (myTable.capacity >= seated.guests) {
                     availableTables.remove(myTable); 
                 } else {
-                    conflicts.add(seated); 
-                    slotSuccess = false;
+                    //conflicts.add(seated); 
+                    //slotSuccess = false;
                 }
             } else {
                 // Graceful Removal: If table is missing, the incumbent is safe.

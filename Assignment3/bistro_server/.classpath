@@ -9,8 +9,8 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/bistro_client"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/OCSF"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/javaFX"/>
-	<classpathentry kind="lib" path="C:/Users/user/Downloads/mysql-connector-j-9.5.0/mysql-connector-j-9.5.0/mysql-connector-j-9.5.0.jar"/>
-	<classpathentry kind="lib" path="C:/Users/user/Downloads/javax.mail.jar"/>
-	<classpathentry kind="lib" path="C:/Users/user/Downloads/activation-1.1.1.jar"/>
+	<classpathentry kind="lib" path="/home/deanza/Documents/Semester 5/Engineering methods for software development/mysql-connector-j-9.5.0/mysql-connector-j-9.5.0/mysql-connector-j-9.5.0.jar"/>
+	<classpathentry kind="lib" path="/home/deanza/Documents/Semester 5/Engineering methods for software development/activation-1.1.1.jar"/>
+	<classpathentry kind="lib" path="/home/deanza/Documents/Semester 5/Engineering methods for software development/javax.mail.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
