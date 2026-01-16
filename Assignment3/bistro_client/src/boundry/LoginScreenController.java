@@ -1,6 +1,7 @@
 package boundry;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 
 import entities.Guest;
 import entities.Manager;
@@ -8,6 +9,7 @@ import entities.Subscriber;
 import entities.User;
 import entities.UserType;
 import entities.Worker;
+import entities.requests.IsBistroOpenRequest;
 import entities.requests.LoginRequest;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -55,6 +57,8 @@ public class LoginScreenController implements IController{
     @FXML
     private Button appBtn;
     
+    private boolean bistroIsOpen;
+    
     /**
      * when the user clicks 'enter terminal as guest'
      * @param event
@@ -62,11 +66,31 @@ public class LoginScreenController implements IController{
      */
     @FXML
     void onGuestTerminalClick(ActionEvent event) throws IOException {
+    	try {
+			checkIfBistroIsOpen();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+    	if(bistroIsOpen) {
     	this.user = new Guest(null, null,null);
     	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/TerminalScreen.fxml", user);
+    	}
+    	else {
+			Alert alert = new Alert(Alert.AlertType.ERROR);
+			alert.setTitle("Error Occurred");
+			alert.setHeaderText("Bistro is closed");
+			alert.setContentText("The bistro is currently closed, please try again later");
+			alert.showAndWait();
+		}
     }
     
-    /**
+    private void checkIfBistroIsOpen() throws InterruptedException {
+		ClientUI.console.accept(new IsBistroOpenRequest(LocalDateTime.now()));
+		Thread.sleep(600); // wait for server response
+		
+	}
+
+	/**
      * when the user clicks 'enter terminal as guest'
      * @param event
      * @throws IOException
@@ -85,7 +109,17 @@ public class LoginScreenController implements IController{
      */   
     @FXML
     void onTerminalClick(ActionEvent event) throws IOException, InterruptedException {		
+    	checkIfBistroIsOpen();
+    	if(bistroIsOpen) {
     	login("TERMINAL", event);
+    	}
+		else {
+			Alert alert = new Alert(Alert.AlertType.ERROR);
+			alert.setTitle("Error Occurred");
+			alert.setHeaderText("Bistro is closed");
+			alert.setContentText("The bistro is currently closed, please try again later");
+			alert.showAndWait();
+		}
     }
     
     /**
@@ -176,7 +210,12 @@ public class LoginScreenController implements IController{
      */
 	@Override
 	public void setResultText(Object result) {
-		serverResponse = (String)result;	
+		if(result instanceof String) {
+			serverResponse = (String)result;	
+		}
+		else if (result instanceof Boolean) {
+			bistroIsOpen = (Boolean)result;
+		}
 	}
 
 	/**

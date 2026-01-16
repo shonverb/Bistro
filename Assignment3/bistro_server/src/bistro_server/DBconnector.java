@@ -13,6 +13,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -797,6 +798,7 @@ public class DBconnector {
 	 * @return A list of all days with their hours
 	 */
 	public List<Day> getAllDaysHours(Request r) {
+		System.out.println("DEBUG: In getAllDaysHours");
 		Connection conn = ConnectionPool.getInstance().getConnection();
 		ArrayList<Day> days = new ArrayList<>();
 		try {
@@ -807,11 +809,14 @@ public class DBconnector {
 				Time open = rs.getTime("open_hour");
 				Time close = rs.getTime("close_hour");
 				Day dayObj = new Day(day, open, close);
+				System.out.println("DEBUG: Retrieved day entry: " + day + ", open: " + open + ", close: " + close + ", closed: "
+						+ rs.getString("status").equals("CLOSE"));
 				dayObj.setClosed(rs.getString("status").equals("CLOSE"));
 				days.add(dayObj);
 			}
 			return days;
 		} catch (SQLException e) {
+			System.out.println("ERROR in getAllDaysHours:");
 			e.printStackTrace();
 		} finally {
 			ConnectionPool.getInstance().returnConnection(conn);
@@ -827,6 +832,7 @@ public class DBconnector {
 	 * @return A list of all specific dates with their hours
 	 */
 	public List<SpecificDate> getAllDatesHours(Request r) {
+		System.out.println("DEBUG: In getAllDatesHours");
 		Connection conn = ConnectionPool.getInstance().getConnection();
 		ArrayList<SpecificDate> dates = new ArrayList<>();
 		try {
@@ -837,6 +843,8 @@ public class DBconnector {
 				Time open = rs.getTime("open_hour");
 				Time close = rs.getTime("close_hour");
 				boolean status = rs.getString("status").equals("CLOSE");
+				System.out.println("DEBUG: Retrieved date entry: " + date + ", open: " + open + ", close: " + close + ", closed: "
+						+ status);
 				SpecificDate datesObj = new SpecificDate(date, open, close);
 				datesObj.setClosed(status);
 				dates.add(datesObj);
@@ -844,12 +852,65 @@ public class DBconnector {
 			}
 			return dates;
 		} catch (SQLException e) {
+			System.out.println("ERROR in getAllDatesHours:");
 			e.printStackTrace();
 		} finally {
 			ConnectionPool.getInstance().returnConnection(conn);
 		}
 
 		return null;
+	}
+	
+	/**
+	 * the method checks if a specific date is closed in the database
+	 * 
+	 * @param dateTimeToCheck The specific date
+	 * @return true if the date is closed, false otherwise
+	 */
+	public boolean isDateClosed(LocalDateTime dateTimeToCheck) {
+		Connection conn = ConnectionPool.getInstance().getConnection();
+		String query = "SELECT * FROM `date` WHERE specific_date = ?;";
+		try (PreparedStatement stmt = conn.prepareStatement(query)) {
+			stmt.setDate(1, Date.valueOf(dateTimeToCheck.toLocalDate()));
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					boolean result = rs.getString("status").equals("CLOSE") || rs.getTime("open_hour").toLocalTime().isAfter(dateTimeToCheck.toLocalTime())
+							|| rs.getTime("close_hour").toLocalTime().isBefore(dateTimeToCheck.toLocalTime());
+					return result;
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			ConnectionPool.getInstance().returnConnection(conn);
+		}
+		return false;
+	}
+	
+	/**
+	 * the method checks if a day of the week is closed in the database
+	 * 
+	 * @param dayOfWeek The day of the week (1=Sunday, 7=Saturday)
+	 * @param localTime 
+	 * @return true if the day is closed, false otherwise
+	 */
+	public boolean isDayClosed(int dayOfWeek, LocalTime localTime) {
+		Connection conn = ConnectionPool.getInstance().getConnection();
+		String query = "SELECT * FROM `day` WHERE day_of_week = ?;";
+		try (PreparedStatement stmt = conn.prepareStatement(query)) {
+			stmt.setInt(1, dayOfWeek);
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					return rs.getString("status").equals("CLOSE") || rs.getTime("open_hour").toLocalTime().isAfter(localTime)
+							|| rs.getTime("close_hour").toLocalTime().isBefore(localTime);
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			ConnectionPool.getInstance().returnConnection(conn);
+		}
+		return false;
 	}
 
 	/**

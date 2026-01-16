@@ -26,6 +26,7 @@ import entities.requests.GetHoursDateRequest;
 import entities.requests.GetHoursDayRequest;
 import entities.requests.GetTableRequest;
 import entities.requests.GetUserActiveOrdersRequest;
+import entities.requests.IsBistroOpenRequest;
 import entities.requests.JoinWaitlistRequest;
 import entities.requests.LeaveTableRequest;
 import entities.requests.RemoveTableRequest;
@@ -107,6 +108,7 @@ public class BistroServer extends AbstractServer {
         handlers.put(RequestType.GET_MAX_TABLE, this::getMaxTable);
         handlers.put(RequestType.CLOSE_DATE, dbcon::closeRestaurantByDate);
         handlers.put(RequestType.CLOSE_DAY, dbcon::closeRestaurantByDay);
+        handlers.put(RequestType.IS_BISTRO_OPEN, this::isBistroOpen);
         
         ConnectionPool.getInstance();
         initWaitingLists();
@@ -297,36 +299,7 @@ public class BistroServer extends AbstractServer {
         System.out.println("current Bistro in join waitlist before check: "+currentBistro.toString());
         Map<String,Integer> guestList = prepareGuestsInTimeList(slotReq, false);
         
-        LocalDateTime orderDateTime = LocalDateTime.parse(req.getOrderDateTime(), DT_FMT);
-        LocalDate orderDate = orderDateTime.toLocalDate();
-        LocalTime orderTime = orderDateTime.toLocalTime();
-        int dayOfWeek = orderDate.getDayOfWeek().getValue();
-        dayOfWeek = (dayOfWeek % 7) + 1;
         
-        List<SpecificDate> dates = dbcon.getAllDatesHours(new GetHoursDateRequest());
-        List<Day> days = dbcon.getAllDaysHours(new GetHoursDayRequest());
-        
-        for (SpecificDate d : dates) {
-			if (d.getDate().equals(orderDate)) {
-				if (d.isClosed()) {
-					return "The restaurant is closed on " + orderDate.toString() + ". Please choose another date.";
-				}
-				if (orderTime.isBefore(d.getOpen().toLocalTime()) || orderTime.isAfter(d.getClose().toLocalTime())) {
-					return "The restaurant is not open at " + orderTime.toString() + " on " + orderDate.toString() + ". Please choose another time.";
-				}
-			}
-		}
-        
-        for (Day d : days) {
-        	if (d.getDay() == dayOfWeek) {
-        			if (d.isClosed()) {
-        				return "The restaurant is closed on day " + dayOfWeek + ". Please choose another date.";
-        			}
-        			if (orderTime.isBefore(d.getOpen().toLocalTime()) || orderTime.isAfter(d.getClose().toLocalTime())) {
-						return "The restaurant is not open at " + orderTime.toString() + " on day " + dayOfWeek + ". Please choose another time.";
-					}
-        	}
-        }
         for (Order o : currentBistro.values()) {
         	if (o != null) {
         		guestList.remove(o.getConfirmationCode());
@@ -832,6 +805,26 @@ public class BistroServer extends AbstractServer {
 		}
 
 		return toSend;
+	}
+	
+	/**
+	 * Checks if the bistro is open for a given date
+	 * 
+	 * @param r the Request
+	 * @return true if open, false otherwise
+	 */
+	public Boolean isBistroOpen(Request r) {
+		IsBistroOpenRequest req = (IsBistroOpenRequest) r;
+		LocalDateTime dateTimeToCheck = req.getDatetime();
+		int dayOfWeek = dateTimeToCheck.getDayOfWeek().getValue(); // 1=Monday, 7=Sunday
+		dayOfWeek = (dayOfWeek%7)+1; // Adjust to 1=Sunday, 7=Saturday
+		if(dbcon.isDateClosed(dateTimeToCheck)) {
+			return false;
+		}
+		if(dbcon.isDayClosed(dayOfWeek, dateTimeToCheck.toLocalTime())) {
+			return false;
+		}
+		return true;
 	}
 	
 	public void refreshCurrentState() {
