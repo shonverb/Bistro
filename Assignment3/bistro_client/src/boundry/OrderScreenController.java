@@ -98,6 +98,9 @@ public class OrderScreenController implements IController {
         if (allSpecificDates != null) {
             for (SpecificDate d : allSpecificDates) {
                 if (d.getDate().equals(date)) {
+                	if(d.isClosed()) {
+                		return null;
+                	}
                     return new Pair<>(d.getOpen().toLocalTime(), d.getClose().toLocalTime());
                 }
             }
@@ -108,6 +111,9 @@ public class OrderScreenController implements IController {
             dayOfWeek = (dayOfWeek % 7) + 1;
             for (Day d : allDays) {
                 if (d.getDay() == dayOfWeek) {
+                	if(d.isClosed()) {
+                		return null;
+                	}
                     return new Pair<>(d.getOpen().toLocalTime(), d.getClose().toLocalTime());
                 }
             }
@@ -128,9 +134,10 @@ public class OrderScreenController implements IController {
 
         LocalTime opening = hours.getKey();
         LocalTime closing = hours.getValue();
+        LocalTime lastOrderTime = closing.minusHours(2);
         LocalDateTime nowPlusHour = LocalDateTime.now().plusHours(1);
 
-        for (LocalTime t = opening; t.isBefore(closing); t = t.plusMinutes(30)) {
+        for (LocalTime t = opening; t.isBefore(lastOrderTime); t = t.plusMinutes(30)) {
             LocalDateTime candidate = LocalDateTime.of(selectedDate, t);
             if (selectedDate.equals(LocalDate.now()) && candidate.isBefore(nowPlusHour)) continue;
             timeComboBox.getItems().add(t.toString());
