@@ -75,17 +75,12 @@ public class BistroServer extends AbstractServer {
 		instance = this;
 
 		dbcon = new DBconnector();
-		if(dbcon.bistroSchemaExists(ConnectionPool.USER,ConnectionPool.PASS) && dbcon.AllTablesExist()) {
-			refreshServerState();
-			ConnectionPool.getInstance();
-			Thread monitorThread = new Thread(new BistroMonitor(this));
-			monitorThread.setDaemon(true); // dies when server stops
-			monitorThread.start();
-		}
-		else {
-			System.out.println("Database is not complete.\nPlease seed the database using the button labeled 'Seed Database' before launching the client.");
-		}
-		
+		refreshServerState();
+		ConnectionPool.getInstance();
+		Thread monitorThread = new Thread(new BistroMonitor(this));
+		monitorThread.setDaemon(true); // dies when server stops
+		monitorThread.start();
+
 		clients = Collections.synchronizedList(new ArrayList<>());
 		handlers = new HashMap<>();
 		tableManager = new TableManager(this);
@@ -529,7 +524,7 @@ public class BistroServer extends AbstractServer {
 //		Thread monitorThread = new Thread(new BistroMonitor(sv));
 //		monitorThread.setDaemon(true); // dies when server stops
 //		monitorThread.start();
-	 	try {
+		try {
 			sv.listen();
 		} catch (Exception ex) {
 			System.out.println("ERROR - Could not listen for clients!");
@@ -859,18 +854,12 @@ public class BistroServer extends AbstractServer {
 	}
 
 	public void seedDatabase() {
-		File[] filesToLoad = {
-				new File("src/db_dumps/bistro_day.sql"),
-				new File("src/db_dumps/bistro_user.sql"),
-				new File("src/db_dumps/bistro_table.sql"),
-				new File("src/db_dumps/bistro_order.sql")
+		File[] filesToLoad = { new File("src/db_dumps/bistro_day.sql"), new File("src/db_dumps/bistro_user.sql"),
+				new File("src/db_dumps/bistro_table.sql"), new File("src/db_dumps/bistro_order.sql"),
+				new File("src/db_dumps/bistro_date.sql")
 
 		};
-		try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/", ConnectionPool.USER,
-				ConnectionPool.PASS)) {
-			Statement stmt = conn.createStatement();
-            stmt.execute("CREATE DATABASE IF NOT EXISTS bistro");
-            stmt.execute("USE bistro");
+		try (Connection conn = ConnectionPool.getInstance().getConnection()) {
 			for (File file : filesToLoad) {
 				if (file.exists()) {
 					SqlScriptRunner.runScript(conn, file);
@@ -879,14 +868,9 @@ public class BistroServer extends AbstractServer {
 				}
 			}
 			conn.close();
-			ConnectionPool.getInstance();
 			refreshServerState();
-			Thread monitorThread = new Thread(new BistroMonitor(this));
-			monitorThread.setDaemon(true);
-			monitorThread.start();
-			
 			System.out.println("All files loaded successfully!");
-			
+
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return;
