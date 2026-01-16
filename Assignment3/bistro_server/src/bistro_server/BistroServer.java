@@ -3,12 +3,8 @@ package bistro_server;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,13 +54,20 @@ public class BistroServer extends AbstractServer {
 	/** A map that holds the state of the restaurant */
 	private HashMap<Table, Order> currentBistro;
 
-	private TableManager tableManager;
+	
 
 	public static BistroServer instance;
 
 	public static final DateTimeFormatter DT_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-	/** A connection to the database */
-	DBconnector dbcon;
+	
+	/** Managers for different functionalities */
+	TableManager tableManager;
+	OrderManager orderManager;
+	ReportManager reportManager;
+	SystemManager systemManager;
+	UserManager userManager;
+	ScheduleManager scheduleManager;
+	
 
 	/**
 	 * 
@@ -73,8 +76,15 @@ public class BistroServer extends AbstractServer {
 	public BistroServer(int port) {
 		super(port);
 		instance = this;
+		tableManager = new TableManager(this);
+		orderManager = new OrderManager(this);
+		userManager = new UserManager();
+		scheduleManager = new ScheduleManager(orderManager);
+		reportManager = new ReportManager();
+		systemManager = new SystemManager();
+		
 
-		dbcon = new DBconnector();
+//		dbcon = new DBconnector();
 		refreshServerState();
 		ConnectionPool.getInstance();
 		Thread monitorThread = new Thread(new BistroMonitor(this));
@@ -83,44 +93,43 @@ public class BistroServer extends AbstractServer {
 
 		clients = Collections.synchronizedList(new ArrayList<>());
 		handlers = new HashMap<>();
-		tableManager = new TableManager(this);
 		handlers.put(RequestType.WRITE_ORDER, this::addNewOrder);
-		handlers.put(RequestType.READ_ORDER, dbcon::getOrder);
-		handlers.put(RequestType.LOGIN_REQUEST, dbcon::checkLogin);
-		handlers.put(RequestType.REGISTER_REQUEST, dbcon::addNewUser);
-		handlers.put(RequestType.CANCEL_REQUEST, dbcon::cancelOrder);
+		handlers.put(RequestType.READ_ORDER, orderManager::getOrder);
+		handlers.put(RequestType.LOGIN_REQUEST, userManager::checkLogin);
+		handlers.put(RequestType.REGISTER_REQUEST, userManager::addNewUser);
+		handlers.put(RequestType.CANCEL_REQUEST, orderManager::cancelOrder);
 		handlers.put(RequestType.RESERVE_TABLE, this::reserveTableInAdvance);
 		handlers.put(RequestType.JOIN_WAITLIST, this::handleJoinWaitlist);
 		handlers.put(RequestType.LEAVE_WAITLIST, this::handleLeaveWaitlist);
 		handlers.put(RequestType.SPOT_WAITLIST, this::handleSpotWaitlist);
-		handlers.put(RequestType.UPDATE_DETAILS, dbcon::updateDetails);
-		handlers.put(RequestType.ORDER_HISTORY, dbcon::getOrderHistory);
+		handlers.put(RequestType.UPDATE_DETAILS, userManager::updateDetails);
+		handlers.put(RequestType.ORDER_HISTORY, orderManager::getOrderHistory);
 		handlers.put(RequestType.CHECK_CONFCODE, this::getPotentialConfCodes);
-		handlers.put(RequestType.GET_ALL_ACTIVE_ORDERS, dbcon::getAllActiveOrders);
-		handlers.put(RequestType.GET_ALL_SUBSCRIBERS, dbcon::getAllSubscribers);
+		handlers.put(RequestType.GET_ALL_ACTIVE_ORDERS, orderManager::getAllActiveOrders);
+		handlers.put(RequestType.GET_ALL_SUBSCRIBERS, userManager::getAllSubscribers);
 		handlers.put(RequestType.GET_TABLE, this::getTableForOrder);
 		handlers.put(RequestType.LEAVE_TABLE, this::leaveTable);
-		handlers.put(RequestType.CHANGE_HOURS_DAY, dbcon::changeHoursDay);
-		handlers.put(RequestType.WRITE_HOURS_DATE, dbcon::writeHoursDate);
+		handlers.put(RequestType.CHANGE_HOURS_DAY, scheduleManager::changeHoursDay);
+		handlers.put(RequestType.WRITE_HOURS_DATE, scheduleManager::writeHoursDate);
 		handlers.put(RequestType.GET_ALL_TABLES, this::getTables);
 		handlers.put(RequestType.ADD_TABLE, this::addTable);
 		handlers.put(RequestType.REMOVE_TABLE, this::removeTable);
 		handlers.put(RequestType.UPDATE_TABLE_CAPACITY, this::updateTable);
 		handlers.put(RequestType.GET_LIVE_BISTRO_STATE, this::getLiveState);
-		handlers.put(RequestType.GET_REPORTS, dbcon::getReportsData);
+		handlers.put(RequestType.GET_REPORTS, reportManager::getReportsData);
 		handlers.put(RequestType.GET_USER_ACTIVE_ORDERS, this::getUserActiveOrders);
-		handlers.put(RequestType.GET_HOURS_DATE, dbcon::getAllDatesHours);
-		handlers.put(RequestType.GET_HOURS_DAY, dbcon::getAllDaysHours);
+		handlers.put(RequestType.GET_HOURS_DATE, scheduleManager::getAllDatesHours);
+		handlers.put(RequestType.GET_HOURS_DAY, scheduleManager::getAllDaysHours);
 		handlers.put(RequestType.GET_MAX_TABLE, this::getMaxTable);
-		handlers.put(RequestType.CLOSE_DATE, dbcon::closeRestaurantByDate);
-		handlers.put(RequestType.CLOSE_DAY, dbcon::closeRestaurantByDay);
+		handlers.put(RequestType.CLOSE_DATE, scheduleManager::closeRestaurantByDate);
+		handlers.put(RequestType.CLOSE_DAY, scheduleManager::closeRestaurantByDay);
 		handlers.put(RequestType.IS_BISTRO_OPEN, this::isBistroOpen);
 
 	}
 
 	/** A method to initialize waiting lists */
 	private void initWaitingLists() {
-		String waitingOrders = dbcon.getWaitingOrders("ON_THE_SPOT");
+		String waitingOrders = orderManager.getWaitingOrders("ON_THE_SPOT");
 		System.out.println(waitingOrders);
 		if (!waitingOrders.equals("")) {
 			String[] onTheSpot = waitingOrders.split("\n");
@@ -131,7 +140,7 @@ public class BistroServer extends AbstractServer {
 				waitlistJustArrived.enqueue(o);
 			}
 		}
-		waitingOrders = dbcon.getWaitingOrders("IN_ADVANCE");
+		waitingOrders = orderManager.getWaitingOrders("IN_ADVANCE");
 		System.out.println(waitingOrders);
 		if (!waitingOrders.equals("")) {
 			String[] inAdvance = waitingOrders.split("\n");
@@ -146,7 +155,7 @@ public class BistroServer extends AbstractServer {
 
 	public List<String> getUserActiveOrders(Request r) {
 		GetUserActiveOrdersRequest req = (GetUserActiveOrdersRequest) r;
-		List<String> confCodes = dbcon.getUserConfCodes(req);
+		List<String> confCodes = userManager.getUserConfCodes(req);
 		return confCodes;
 	}
 
@@ -235,7 +244,7 @@ public class BistroServer extends AbstractServer {
 	 * @return a list of all tables
 	 */
 	public List<Table> getTables(Request r) {
-		tables = dbcon.getAllTables();
+		tables = tableManager.getAllTables();
 		return tables;
 	}
 
@@ -287,7 +296,7 @@ public class BistroServer extends AbstractServer {
 		String ordernum = BistroServer.waitlistJustArrived.cancel(confCode);
 
 		if (ordernum != "not found") {
-			dbcon.changeStatus("CANCELLED", ordernum);
+			orderManager.changeStatus("CANCELLED", ordernum);
 			return confCode + " have been removed from the waiting list.";
 		} else {
 			return "Could not find an order with this confiramtion code in the waiting list.";
@@ -329,11 +338,11 @@ public class BistroServer extends AbstractServer {
 			currentBistro.put(desiredTable, waitlistOrder); // Seat at the first available table
 
 			desiredTable.setTaken(true);
-			dbcon.putOrderToTable(waitlistOrder.getOrderNumber(), desiredTable.getId(), true);
-			dbcon.markArrivalAtTerminal(waitlistOrder.getOrderNumber());
-			dbcon.markOrderAsSeated(waitlistOrder.getOrderNumber());
-			dbcon.setOrderType(waitlistOrder.getOrderNumber(), "ON_THE_SPOT");
-			return "SUCCESS: Table is ready! Please proceed to your table.\n" + "Your confirmation code: "
+			tableManager.putOrderToTable(waitlistOrder.getOrderNumber(), desiredTable.getId(), true);
+			orderManager.markArrivalAtTerminal(waitlistOrder.getOrderNumber());
+			orderManager.markOrderAsSeated(waitlistOrder.getOrderNumber());
+			orderManager.setOrderType(waitlistOrder.getOrderNumber(), "ON_THE_SPOT");
+			return "SUCCESS: Table #"+tableId+" is ready! Please proceed to your table.\n" + "Your confirmation code: "
 					+ (waitlistOrder.getConfirmationCode()) + "\n";
 		}
 
@@ -351,9 +360,9 @@ public class BistroServer extends AbstractServer {
 		System.out.println(waitlistJustArrived);
 
 		printWaitlists(BistroServer.waitlistJustArrived, 1);
-		dbcon.markArrivalAtTerminal(waitlistOrder.getOrderNumber());
-		dbcon.changeStatus("WAITING", orderNum);
-		dbcon.setOrderType(waitlistOrder.getOrderNumber(), "ON_THE_SPOT");
+		orderManager.markArrivalAtTerminal(waitlistOrder.getOrderNumber());
+		orderManager.changeStatus("WAITING", orderNum);
+		orderManager.setOrderType(waitlistOrder.getOrderNumber(), "ON_THE_SPOT");
 		return "The restaurant is full. You've been added to the waitlist.\n" + "Order Number: " + orderNum + "\n"
 				+ "Confirmation Code: " + waitlistOrder.getConfirmationCode();
 	}
@@ -406,13 +415,13 @@ public class BistroServer extends AbstractServer {
 		String email;
 		if (!req.getSubscriberId().equals("0")) {
 
-			email = dbcon.readEmail(req.getSubscriberId());
+			email = userManager.readEmail(req.getSubscriberId());
 		} else {
 			email = req.getContact();
 		}
 
 		System.out.println("Retrieved email: " + email);
-		String orderNumber = dbcon.OrderNumber();
+		String orderNumber = orderManager.OrderNumber();
 		System.out.println("Generated order number: " + orderNumber);
 		ArrayList<String> args = new ArrayList<>();
 		args.add(orderNumber);
@@ -423,7 +432,7 @@ public class BistroServer extends AbstractServer {
 		args.add(email);
 		Order o = new Order(args);
 
-		System.out.println(dbcon.addOrder(o, req.getQuery()));
+		System.out.println(orderManager.addOrder(o, req.getQuery()));
 		return o;
 	}
 
@@ -451,7 +460,7 @@ public class BistroServer extends AbstractServer {
 		}
 		if (available != -1) {
 			Order o = addNewOrder(req);
-			dbcon.setOrderType(o.getOrderNumber(), "IN_ADVANCE");
+			orderManager.setOrderType(o.getOrderNumber(), "IN_ADVANCE");
 			return o.toString();
 		} else {
 			StringBuilder sb = new StringBuilder("No available tables at requested time. Available slots:\n");
@@ -491,7 +500,7 @@ public class BistroServer extends AbstractServer {
 	 */
 	protected Map<String, Integer> prepareGuestsInTimeList(Request r, boolean isNotInDatabase) {
 		ShowTakenSlotsRequest slotReq = (ShowTakenSlotsRequest) r;
-		String open_orders_in_time_string = dbcon.getTakenSlots(slotReq);
+		String open_orders_in_time_string = orderManager.getTakenSlots(slotReq);
 		String[] open_orders_in_time_array = open_orders_in_time_string.split(",");
 		HashMap<String, Integer> guests_in_time = new HashMap<>();
 		// prepare guests in time list
@@ -555,7 +564,7 @@ public class BistroServer extends AbstractServer {
 			Order order = entry.getValue();
 			if (order != null && order.getConfirmationCode().equals(req.getConfcode())) {
 				order.setSittingtime(LocalDateTime.now());
-				dbcon.markOrderAsSeated(order.getOrderNumber());
+				orderManager.markOrderAsSeated(order.getOrderNumber());
 				return entry.getKey().prettyToString();
 
 			}
@@ -571,7 +580,7 @@ public class BistroServer extends AbstractServer {
 				return "You are currently on the waitlist.";
 			}
 		}
-		String[] args = dbcon.getOrderFromConfCode(req.getQuery(), req.getConfcode()).split(",");
+		String[] args = orderManager.getOrderFromConfCode(req.getQuery(), req.getConfcode()).split(",");
 		if (args[0].equals("Not found")) {
 			return "No open order found with that number";
 		}
@@ -598,7 +607,7 @@ public class BistroServer extends AbstractServer {
 		Table desiredTable = null;
 		int tableId = trySeatNow(guests_in_time, req.getConfcode(), number_of_guests);
 		// update actual arrival time
-		dbcon.markArrivalAtTerminal(o.getOrderNumber());
+		orderManager.markArrivalAtTerminal(o.getOrderNumber());
 		if (tableId != -1) {
 			for (Table t : currentBistro.keySet()) {
 				if (t.getId() == tableId) {
@@ -609,15 +618,15 @@ public class BistroServer extends AbstractServer {
 							+ "To order number " + o.getOrderNumber());
 					currentBistro.put(t, o); // Seat at the first available table
 					t.setTaken(true);
-					dbcon.putOrderToTable(o.getOrderNumber(), desiredTable.getId(), true);
-					dbcon.markOrderAsSeated(o.getOrderNumber());
+					tableManager.putOrderToTable(o.getOrderNumber(), desiredTable.getId(), true);
+					orderManager.markOrderAsSeated(o.getOrderNumber());
 					break;
 				}
 			}
 			return (desiredTable != null) ? desiredTable.prettyToString() : "Error locating table.";
 		} else {
 			System.out.println("BeforeEnqueue, order dateTime is: " + o.getOrderDateTime());
-			dbcon.changeStatus("WAITING", o.getOrderNumber());
+			orderManager.changeStatus("WAITING", o.getOrderNumber());
 			waitlistOrderedInAdvance.enqueue(o);
 			System.out.println("After enqueue");
 			return "No available tables at the moment. Please wait to be seated.";
@@ -646,10 +655,10 @@ public class BistroServer extends AbstractServer {
 				else {
 					currentBistro.put(entry.getKey(), null);
 					entry.getKey().setTaken(false);
-					dbcon.putOrderToTable(order.getOrderNumber(), entry.getKey().getId(), false);
+					tableManager.putOrderToTable(order.getOrderNumber(), entry.getKey().getId(), false);
 				}
 
-				String userType = dbcon.closeOrder(req);
+				String userType = orderManager.closeOrder(req);
 
 				if (userType == null) {
 					return "Order closed successfully. Your bill is " + BILL + " NIS. Thank you for dining with us!";
@@ -794,7 +803,7 @@ public class BistroServer extends AbstractServer {
 	 */
 	public String getPotentialConfCodes(Request r) {
 		CheckConfCodeRequest req = (CheckConfCodeRequest) r;
-		String res = dbcon.checkConfCode(req);
+		String res = orderManager.checkConfCode(req);
 		String toSend = "";
 		if (res.equals("")) {
 			toSend = "No confirmation codes found for that contact in the specified time frame.";
@@ -819,17 +828,17 @@ public class BistroServer extends AbstractServer {
 		LocalDateTime dateTimeToCheck = req.getDatetime();
 		int dayOfWeek = dateTimeToCheck.getDayOfWeek().getValue(); // 1=Monday, 7=Sunday
 		dayOfWeek = (dayOfWeek % 7) + 1; // Adjust to 1=Sunday, 7=Saturday
-		if (dbcon.isDateClosed(dateTimeToCheck)) {
+		if (scheduleManager.isDateClosed(dateTimeToCheck)) {
 			return false;
 		}
-		if (dbcon.isDayClosed(dayOfWeek, dateTimeToCheck.toLocalTime())) {
+		if (scheduleManager.isDayClosed(dayOfWeek, dateTimeToCheck.toLocalTime())) {
 			return false;
 		}
 		return true;
 	}
 
 	public void refreshCurrentState() {
-		currentBistro = dbcon.getCurrentBistroState();
+		currentBistro = tableManager.getCurrentBistroState();
 	}
 
 	@Override
@@ -846,7 +855,7 @@ public class BistroServer extends AbstractServer {
 		try {
 			refreshCurrentState();
 			initWaitingLists();
-			tables = dbcon.getAllTables();
+			tables = tableManager.getAllTables();
 		} catch (Exception e) {
 			System.out.println("Error refreshing server state: " + e.getMessage());
 			System.out.println("Please press the 'Seed Database' button to reset the database.");

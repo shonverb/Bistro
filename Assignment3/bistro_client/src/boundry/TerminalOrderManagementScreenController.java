@@ -88,6 +88,7 @@ public class TerminalOrderManagementScreenController implements IController {
     private String getEffectiveConfCode() {
         if (isLoggedIn.get() && confCodeCombo != null) {
             String selection = confCodeCombo.getValue();
+            selection = selection.split(" ")[0];
             return (selection == null) ? "" : selection.trim();
         } else {
             return confCodeTxt.getText().trim();
@@ -124,6 +125,10 @@ public class TerminalOrderManagementScreenController implements IController {
                 ClientUI.console.accept(c);
             }
         }
+        if(isLoggedIn.get()) {
+        	loadUserActiveOrders();
+        }
+
     }
     
     @FXML
@@ -204,6 +209,8 @@ public class TerminalOrderManagementScreenController implements IController {
             return;
         }
         ClientUI.console.accept(new GetTableRequest(confcode));
+        
+
     }
     
     @FXML
@@ -228,6 +235,10 @@ public class TerminalOrderManagementScreenController implements IController {
         else {
             AlterWaitlistRequest r = new AlterWaitlistRequest(rawCode, RequestType.LEAVE_WAITLIST);
             ClientUI.console.accept(r);
+            Thread.sleep(300);
+            if(isLoggedIn.get()) {
+				loadUserActiveOrders();
+			}
         }
     }
 

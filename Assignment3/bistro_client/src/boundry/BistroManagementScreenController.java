@@ -180,60 +180,71 @@ public class BistroManagementScreenController implements IController {
 	}
 
 	/**
-	 * Handles the tables button click event. Validates input and sends appropriate
-	 * requests to the server.
-	 * 
-	 * @param event The action event triggered by clicking the tables button.
-	 */
-	@FXML
-	void onTablesBtnClick(ActionEvent event) throws InterruptedException {
-		try {
+     * Handles the tables button click event. Validates input and sends appropriate
+     * requests to the server.
+     */
+    @FXML
+    void onTablesBtnClick(ActionEvent event) {
+        Table selectedTable = currentTables.getValue();
+        boolean isRemoveChecked = removeTableCheck.isSelected();
+        String addCapInput = AddTableCapText.getText().trim();
+        String setCapInput = setTableCapText.getText().trim();
 
-			if (removeTableCheck.isSelected()) {
-				Table selectedTable = currentTables.getValue();
-				if (selectedTable != null) {
-					ClientUI.console.accept(new RemoveTableRequest(selectedTable.getId()));
-					removeTableCheck.setSelected(false);
-				} else {
-					Alert alert = new Alert(AlertType.ERROR);
-					alert.setTitle("Error Occurred");
-					alert.setHeaderText("No Table Selected");
-					alert.setContentText("Please select a table to remove");
-					alert.showAndWait();
-				}
-			}
+        int actionsAttempted = 0;
+        if (isRemoveChecked) actionsAttempted++;
+        if (!addCapInput.isEmpty()) actionsAttempted++;
+        if (!setCapInput.isEmpty()) actionsAttempted++;
 
-			else if (!AddTableCapText.getText().isEmpty()) {
-				int capacity = Integer.parseInt(AddTableCapText.getText());
-				ClientUI.console.accept(new AddTableRequest(capacity));
-				AddTableCapText.clear();
-			}
+        if (actionsAttempted > 1) {
+            showAlert("Conflicting Inputs", "Please perform only one action at a time:\n"
+                    + "- Remove a table\n"
+                    + "- OR Add a new table\n"
+                    + "- OR Update an existing table.");
+            return;
+        }
+        if (actionsAttempted == 0) {
+            showAlert("No Action", "Please select a table action or enter a capacity.");
+            return; 
+        }
 
-			else if (!setTableCapText.getText().isEmpty()) {
-				Table selectedTable = currentTables.getValue();
-				if (selectedTable != null) {
-					int newCapacity = Integer.parseInt(setTableCapText.getText());
-					ClientUI.console.accept(new UpdateTableCapacityRequest(selectedTable.getId(), newCapacity));
-					setTableCapText.clear();
-				} else {
-					Alert alert = new Alert(AlertType.ERROR);
-					alert.setTitle("Error Occurred");
-					alert.setHeaderText("No Table Selected");
-					alert.setContentText("Please select a table to update its capacity");
-					alert.showAndWait();
-				}
-			}
-			Thread.sleep(500);
-			ClientUI.console.accept(new GetAllTablesRequest());
-		} catch (NumberFormatException e) {
-			Alert alert = new Alert(AlertType.ERROR);
-			alert.setTitle("Error Occurred");
-			alert.setHeaderText("Invalid Input");
-			alert.setContentText("Please enter a valid number for table capacity");
-			alert.showAndWait();
-		}
-	}
+        if ((isRemoveChecked || !setCapInput.isEmpty()) && selectedTable == null) {
+            showAlert("No Table Selected", "Please select a table from the list to perform this action.");
+            return; 
+        }
 
+        try {
+            if (isRemoveChecked) {
+                ClientUI.console.accept(new RemoveTableRequest(selectedTable.getId()));
+                removeTableCheck.setSelected(false);
+                
+            } else if (!addCapInput.isEmpty()) {
+                int capacity = Integer.parseInt(addCapInput);
+                if (capacity <= 0) throw new NumberFormatException(); // Ensure positive capacity
+                ClientUI.console.accept(new AddTableRequest(capacity));
+                AddTableCapText.clear();
+                
+            } else if (!setCapInput.isEmpty()) {
+                int newCapacity = Integer.parseInt(setCapInput);
+                if (newCapacity <= 0) throw new NumberFormatException(); // Ensure positive capacity
+                ClientUI.console.accept(new UpdateTableCapacityRequest(selectedTable.getId(), newCapacity));
+                setTableCapText.clear();
+            }
+
+            try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+            ClientUI.console.accept(new GetAllTablesRequest());
+
+        } catch (NumberFormatException e) {
+            showAlert("Invalid Input", "Capacity must be a valid positive number.");
+        }
+    }
+
+    private void showAlert(String header, String content) {
+        Alert alert = new Alert(AlertType.ERROR);
+        alert.setTitle("Error Occurred");
+        alert.setHeaderText(header);
+        alert.setContentText(content);
+        alert.showAndWait();
+    }
 	/**
 	 * Handles the back button click event. Navigates back to the worker screen.
 	 * 

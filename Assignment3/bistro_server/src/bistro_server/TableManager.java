@@ -1,6 +1,7 @@
 package bistro_server;
 
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.*;
 import entities.requests.AddTableRequest;
 import entities.requests.CancelRequest;
@@ -47,26 +48,27 @@ public class TableManager {
     public String removeTable(RemoveTableRequest req) {
         int tableId = req.getId();
         Set<SimOrder> conflicts = new HashSet<>();
-
+        StringBuilder sb = new StringBuilder();
         // 1. Simulation Check
         if (!isSafeToReconfigure(tableId, 0, conflicts)) {
             // 2. Handle Conflicts (Cancel & Email)
             processCancellations(conflicts, "Removing Table " + tableId);
             
-            StringBuilder sb = new StringBuilder();
+            
             sb.append("Removing Table " + tableId + " conflicts with orders to be cancelled:");
             for (SimOrder o : conflicts) sb.append(" " + o.id);
-            return sb.toString();
+            sb.append("\n");
         }
         
         // 3. Execution (Graceful vs Immediate)
         if (isTableOccupied(tableId)) {
             markForPendingRemoval(tableId);
-            return "Table " + tableId + " marked for removal after current order.";
+            sb.append("Table " + tableId + " marked for removal after current order.");
         } else {
             hardDeleteTable(tableId);
-            return "Table " + tableId + " Removed.";
+            sb.append("Table " + tableId + " Removed.");
         }
+        return sb.toString();
     }
 
     /**
@@ -122,7 +124,7 @@ public class TableManager {
      */
     private void processCancellations(Set<SimOrder> conflicts, String reason) {
         for (SimOrder o : conflicts) {
-            server.dbcon.cancelOrder(new CancelRequest(o.confirmationCode));
+            server.orderManager.cancelOrder(new CancelRequest(o.confirmationCode));
             if(o.status.equals("WAITING")) {
 				server.getRegularWaitlist().cancel(o.confirmationCode);
 			}
@@ -385,4 +387,123 @@ public class TableManager {
         }
         return -1;
     }
+    
+	/**
+	 * the method gets all relevant tables from the database
+	 * 
+	 * @return A list of relevant tables
+	 */
+	public HashMap<Table, Order> getCurrentBistroState() {
+		Connection conn = ConnectionPool.getInstance().getConnection();
+		HashMap<Table, Order> currentBistro = new HashMap<>();
+		try {
+			PreparedStatement stmt = conn.prepareStatement(
+					"SELECT * FROM `table` WHERE pending_removal = FALSE;");
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				int id = rs.getInt("table_number");
+				int capacity = rs.getInt("number_of_seats");
+				int currentOrder = rs.getInt("current_order");
+				if (currentOrder != 0) {
+					try {
+						PreparedStatement stmt2 = conn
+								.prepareStatement("SELECT * FROM `order` WHERE order_number = ?;");
+						stmt2.setInt(1, currentOrder);
+						ResultSet rs2 = stmt2.executeQuery();
+						ArrayList<String> order = new ArrayList<>();
+						LocalDateTime orderSittingTime = null;
+						if (rs2.next()) {
+							order.add(rs2.getString("order_number"));
+							order.add(rs2.getString("order_datetime"));
+							order.add(rs2.getString("number_of_guests"));
+							order.add(rs2.getString("confirmation_code"));
+							order.add(rs2.getString("subscriber_id"));
+							order.add(rs2.getString("date_of_placing_order"));
+							order.add(rs2.getString("contact"));
+							orderSittingTime = rs2.getObject("seated_time", LocalDateTime.class);
+
+						}
+						Order o = new Order(order, 0);
+						o.setSittingtime(orderSittingTime);
+						System.out.println(order);
+						currentBistro.put(new Table(id, capacity, true), o);
+					} catch (SQLException e) {
+						//e.printStackTrace();
+						ConnectionPool.getInstance().returnConnection(conn);
+					}
+
+				} else {
+					currentBistro.put(new Table(id, capacity, false), null);
+				}
+
+			}
+			return currentBistro;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			ConnectionPool.getInstance().returnConnection(conn);
+		}
+
+		return null;
+	}
+	
+	/**
+	 * the method gets all tables from the database
+	 * 
+	 * @return A list of all tables
+	 */
+	public List<Table> getAllTables() {
+		Connection conn = ConnectionPool.getInstance().getConnection();
+		ArrayList<Table> tables = new ArrayList<>();
+		try {
+			PreparedStatement stmt = conn.prepareStatement("SELECT * FROM `table` WHERE pending_removal = FALSE;");
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				int id = rs.getInt("table_number");
+				int capacity = rs.getInt("number_of_seats");
+				tables.add(new Table(id, capacity, false));
+			}
+			return tables;
+		} catch (SQLException e) {
+			//e.printStackTrace();
+		} finally {
+			ConnectionPool.getInstance().returnConnection(conn);
+		}
+
+		return null;
+	}
+
+	/**
+	 * the method assigns or removes an order to/from a table in the database
+	 * @param orderNum
+	 * @param tableNum
+	 * @param wantToSit
+	 */
+	public void putOrderToTable(String orderNum, int tableNum, boolean wantToSit) {
+		Connection conn = ConnectionPool.getInstance().getConnection();
+		String query;
+		if (wantToSit) {
+			query = "UPDATE `table` SET current_order = ? WHERE table_number = ?;";
+		} else {
+			query = "UPDATE `table` SET current_order = '0' WHERE table_number = ?;";
+		}
+
+		try {
+			PreparedStatement stmt = conn.prepareStatement(query);
+			if (wantToSit) {
+				stmt.setInt(1, Integer.parseInt(orderNum));
+				stmt.setInt(2, tableNum);
+			} else {
+				stmt.setInt(1, tableNum);
+			}
+
+			stmt.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			ConnectionPool.getInstance().returnConnection(conn);
+		}
+	}
+
+ 
 }

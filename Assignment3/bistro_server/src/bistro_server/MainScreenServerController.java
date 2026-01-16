@@ -1,9 +1,5 @@
 package bistro_server;
 
-import java.io.File;
-import java.sql.Connection;
-import java.sql.SQLException;
-
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;

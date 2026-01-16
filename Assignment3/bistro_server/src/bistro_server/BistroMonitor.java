@@ -1,6 +1,8 @@
 package bistro_server;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -58,7 +60,7 @@ public class BistroMonitor implements Runnable {
 	 * A method that notifies customers about their orders that are due in 2 hours
 	 */
 	private void notifyAboutOrder() {
-		Map<String,String> contacts=server.dbcon.OrdersToNotify();
+		Map<String,String> contacts=server.orderManager.OrdersToNotify();
 		for(Map.Entry<String, String> entry : contacts.entrySet()) {
 	    	String orderNumber=entry.getKey();
 	    	String contact=entry.getValue();
@@ -85,7 +87,7 @@ public class BistroMonitor implements Runnable {
 			}
 		
 		}
-	    Map<String,String> contacts=server.dbcon.ExpirePendingOrders(expiredOrders);
+	    Map<String,String> contacts=server.orderManager.ExpirePendingOrders(expiredOrders);
 	    for(Map.Entry<String, String> entry : contacts.entrySet()) {
 	    	String orderNumber=entry.getKey();
 	    	String contact=entry.getValue();
@@ -120,13 +122,13 @@ public class BistroMonitor implements Runnable {
 	                " \n Seating time exceeded for order: " + order.getOrderNumber()
 	                + " Please contact the bistro staff."
 	            );
-	            server.dbcon.cancelOrder(new CancelRequest(order.getConfirmationCode()));
+	            server.orderManager.cancelOrder(new CancelRequest(order.getConfirmationCode()));
 	            for(Map.Entry<Table, Order> tableEntry : currentBistro.entrySet()) {
 	            	if(tableEntry.getValue()!=null && tableEntry.getValue().getConfirmationCode().equals(order.getConfirmationCode())) {
 	            		Table table=tableEntry.getKey();
 	            		table.setTaken(false);
 	            		currentBistro.put(table, null);
-	    	        	server.dbcon.putOrderToTable(order.getOrderNumber(), table.getId(), false);
+	    	        	server.tableManager.putOrderToTable(order.getOrderNumber(), table.getId(), false);
 	    	        	if(table.pendingRemoval()) {
 	    	        		table.setPendingRemoval(false);
 	    	        		server.removeTable(new RemoveTableRequest(table.getId()));
@@ -151,7 +153,8 @@ public class BistroMonitor implements Runnable {
 	 */
 	private void checkOrdersAndAdvanceTime() {
 	    Map<Table, Order> currentBistro = server.getCurrentBistro();
-
+	    boolean isClosed = server.scheduleManager.isDayClosed((LocalDate.now().getDayOfWeek().getValue()+1)%7, LocalTime.now()) || 
+        		server.scheduleManager.isDateClosed(LocalDateTime.now());
 
 	    for (Map.Entry<Table, Order> entry : currentBistro.entrySet()) {
 
@@ -162,13 +165,22 @@ public class BistroMonitor implements Runnable {
 	            continue; // table is empty
 	        }
 	        System.out.println("Checking order number " + order.getOrderNumber());
-
+	        if (isClosed) {
+	        	if(order.getContact().contains("@")) {
+	        		sendEmailBistroClosed(order.getOrderNumber(), order.getContact());
+	        	}
+	        	else{
+	        		ServerUI.updateInScreen("for contact: "+ order.getContact()+
+	        				" Order " + order.getOrderNumber()
+	    	                + "\nThe bistro is now closed. Please wrap up your visit. Thank you for dining with us!");
+	        	}
+	            continue;
+	        }
 	        LocalDateTime sittingTime = order.getSittingtime();
 	        LocalDateTime twoHoursAfterSitting = sittingTime.plusHours(2);
-
+	        
 	        //  check if current time is AFTER sitting time + 2 hours
 	        if (!LocalDateTime.now().isBefore(twoHoursAfterSitting)) {
-
 	            
 	            System.out.println(" Order " + order.getConfirmationCode()
 	                    + " exceeded 2 hours at table " + table.getId());
@@ -183,6 +195,22 @@ public class BistroMonitor implements Runnable {
 
 	}
 	
+	private void sendEmailBistroClosed(String orderNumber, String contact) {
+		EmailService emailService = EmailService.getInstance();
+		String subject = String.format("Notice: The Bistro is now closed (Order #%s)", orderNumber);
+		String content = String.format(
+			    "Hello,\n\n" +
+			    "We hope you had a wonderful time dining with us today!\n\n" +
+			    "We would like to inform you that The Bistro is now closed for the day.\n" +
+			    "Please begin wrapping up your visit at your earliest convenience.\n\n" +
+			    "Thank you for choosing The Bistro. We look forward to serving you again soon!\n" +
+			    "The Bistro Team", 
+			    orderNumber
+			);
+		emailService.sendEmail(contact, subject, content);
+		
+	}
+
 	/**
 	 * A method that tries to seat orders from the waiting list when tables become
 	 * available.
@@ -204,7 +232,7 @@ public class BistroMonitor implements Runnable {
 		    	toRemove.add(new WaitlistNode(wl));
 		    	if(wl.getContact().contains("@")) sendTableReadyEmail(wl.getContact(), wl.getOrderNumber(), res);
 		    	ServerUI.updateInScreen("for contact: "+wl.getContact()+"\n order number: "+wl.getOrderNumber()+ "\ntable number "+res+" got available for you,please come to the Bistro within 15 minute from this massage");
-		    	server.dbcon.changeStatus("OPEN", wl.getOrderNumber());
+		    	server.orderManager.changeStatus("OPEN", wl.getOrderNumber());
 		   	}
 	    }
 	    for(WaitlistNode node : toRemove) {
@@ -221,7 +249,7 @@ public class BistroMonitor implements Runnable {
 		    	toRemove.add(new WaitlistNode(wl2));
 		    	if(wl2.getContact().contains("@")) sendTableReadyEmail(wl2.getContact(), wl2.getOrderNumber(), res);
 		    	ServerUI.updateInScreen("for contact: "+wl2.getContact()+"\norder Number: "+wl2.getOrderNumber()+"\ntable number  "+res+" got available for you,please come to the Bistro within 15 minute from this massage");
-		    	server.dbcon.changeStatus("OPEN", wl2.getOrderNumber());
+		    	server.orderManager.changeStatus("OPEN", wl2.getOrderNumber());
 		    }
 		}
 		for(WaitlistNode node : toRemove) {
@@ -267,7 +295,7 @@ public class BistroMonitor implements Runnable {
         			System.out.println("Found desired table with ID: " + t.getId());	
 					currentBistro.put(t, order); // Seat at the first available table
 					t.setTaken(true);
-					server.dbcon.putOrderToTable(order.getOrderNumber(), t.getId(), true);
+					server.tableManager.putOrderToTable(order.getOrderNumber(), t.getId(), true);
 					pending.put(order, LocalDateTime.now());
 					break;
 				}

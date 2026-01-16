@@ -9,7 +9,7 @@ public class CloseDayRequest extends Request {
 
     public CloseDayRequest(String day) {
         super(RequestType.CLOSE_DAY,
-              "UPDATE `date` SET status = 'CLOSE' WHERE day_of_week = ?");
+              "UPDATE `day` SET status = 'CLOSE' WHERE day_of_week = ?");
         this.day = day;
     }
     
