@@ -5,9 +5,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.sql.Connection;
 import java.sql.Date;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -402,7 +404,7 @@ public class DBconnector {
 						System.out.println(order);
 						currentBistro.put(new Table(id, capacity, true), o);
 					} catch (SQLException e) {
-						e.printStackTrace();
+						//e.printStackTrace();
 						ConnectionPool.getInstance().returnConnection(conn);
 					}
 
@@ -638,7 +640,7 @@ public class DBconnector {
 			ResultSet rs = stmt.executeQuery();
 			if (rs.next()) {
 				rs.updateString("status", "CLOSED");
-				rs.updateTimestamp("leave_time", Timestamp.valueOf(BistroServer.dateTime));
+				rs.updateTimestamp("leave_time", Timestamp.valueOf(LocalDateTime.now()));
 				rs.updateRow();
 				return rs.getString("subscriber_id");
 			} else {
@@ -709,7 +711,7 @@ public class DBconnector {
 		Connection conn = ConnectionPool.getInstance().getConnection();
 		Map<String, String> expiredOrders = new HashMap<>();
 		String query = "SELECT order_number, contact, status FROM `order` WHERE status = 'OPEN' AND order_datetime <= ?;";
-		LocalDateTime expirationTime = BistroServer.dateTime.minusMinutes(15);
+		LocalDateTime expirationTime = LocalDateTime.now().minusMinutes(15);
 		try {
 			PreparedStatement stmt = conn.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE,
 					ResultSet.CONCUR_UPDATABLE);
@@ -744,7 +746,7 @@ public class DBconnector {
 		Connection conn = ConnectionPool.getInstance().getConnection();
 		Map<String, String> contacts = new HashMap<>();
 		String query = "SELECT order_number, contact FROM `order` WHERE status = 'OPEN' AND order_datetime = ?;";
-		LocalDateTime notificationTime = BistroServer.dateTime.plusHours(2);
+		LocalDateTime notificationTime = LocalDateTime.now().plusHours(2);
 		try {
 			PreparedStatement stmt = conn.prepareStatement(query);
 			stmt.setTimestamp(1, Timestamp.valueOf(notificationTime));
@@ -783,7 +785,7 @@ public class DBconnector {
 			}
 			return tables;
 		} catch (SQLException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		} finally {
 			ConnectionPool.getInstance().returnConnection(conn);
 		}
@@ -922,7 +924,7 @@ public class DBconnector {
 		Connection conn = ConnectionPool.getInstance().getConnection();
 		String query = "UPDATE `order` SET actual_arrival = ? WHERE order_number = ? AND actual_arrival IS NULL";
 		try (PreparedStatement stmt = conn.prepareStatement(query)) {
-			stmt.setTimestamp(1, Timestamp.valueOf(BistroServer.dateTime));
+			stmt.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
 			stmt.setInt(2, Integer.parseInt(orderNumber));
 			stmt.executeUpdate();
 		} catch (SQLException e) {
@@ -942,7 +944,7 @@ public class DBconnector {
 		Connection conn = ConnectionPool.getInstance().getConnection();
 		String query = "UPDATE `order` SET seated_time = ? WHERE order_number = ? AND seated_time IS NULL";
 		try (PreparedStatement stmt = conn.prepareStatement(query)) {
-			stmt.setTimestamp(1, Timestamp.valueOf(BistroServer.dateTime));
+			stmt.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
 			stmt.setInt(2, Integer.parseInt(orderNumber));
 			stmt.executeUpdate();
 		} catch (SQLException e) {
@@ -1176,7 +1178,7 @@ public class DBconnector {
 						.append("\n");
 			}
 		} catch (SQLException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		} finally {
 			ConnectionPool.getInstance().returnConnection(conn);
 		}
@@ -1317,7 +1319,7 @@ public class DBconnector {
 	    Connection conn = ConnectionPool.getInstance().getConnection();
 	    CloseDayRequest req = (CloseDayRequest) r;
 	    String dayOfWeek = req.getDay();
-	    String query = "UPDATE `day` SET status = 'CLOSE' WHERE day_of_week = ?";
+	    String query = req.getQuery();
 
 	    try (PreparedStatement stmt = conn.prepareStatement(query)) {
 	        stmt.setString(1, dayOfWeek);
@@ -1347,10 +1349,13 @@ public class DBconnector {
 	    Connection conn = ConnectionPool.getInstance().getConnection();
 	    CloseDateRequest req = (CloseDateRequest) r;
 	    String date = req.getDate();
-	    String query = "UPDATE `date` SET status = 'CLOSE' WHERE specific_date = ?";
+	    String query = req.getQuery();
 
 	    try (PreparedStatement stmt = conn.prepareStatement(query)) {
-	        stmt.setDate(1, java.sql.Date.valueOf(date));
+	        stmt.setDate(1, Date.valueOf(date));
+	        stmt.setTime(2, Time.valueOf("00:00:00"));
+	        stmt.setTime(3, Time.valueOf("00:00:00"));
+	        stmt.setString(4, "CLOSE");
 
 	        int rows = stmt.executeUpdate();
 	        if (rows > 0) {
@@ -1478,5 +1483,25 @@ public class DBconnector {
 	        stmt.executeUpdate();
 	    }
 	}
-	
+	public boolean bistroSchemaExists(String dbUser, String dbPassword) {
+	    // Connect to the MySQL server directly, not the specific 'bistro' DB
+	    String serverUrl = "jdbc:mysql://localhost:3306/"; 
+	    String query = "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?";
+
+	    try (Connection conn = DriverManager.getConnection(serverUrl, dbUser, dbPassword);
+	         PreparedStatement stmt = conn.prepareStatement(query)) {
+	        
+	        stmt.setString(1, "bistro");
+	        
+	        try (ResultSet rs = stmt.executeQuery()) {
+	            // If we get a row back, the schema exists
+	            return rs.next(); 
+	        }
+
+	    } catch (SQLException e) {
+	        System.err.println("Error checking for schema: " + e.getMessage());
+	        return false;
+	    }
+	}
+
 }

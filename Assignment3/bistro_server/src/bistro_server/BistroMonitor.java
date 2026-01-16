@@ -44,9 +44,8 @@ public class BistroMonitor implements Runnable {
 				checkExpiredOrders();
 				notifyAboutOrder();
 				trySeatFromWaitlist();
-				Thread.sleep(30000); // Check every 60 seconds
-				 BistroServer.dateTime = BistroServer.dateTime.plusMinutes(15);
-				 System.out.println("Time advanced to: " + BistroServer.dateTime);
+				Thread.sleep(60000); // Check every 60 seconds
+				 System.out.println("Monitor cycle completed");
 
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
@@ -113,7 +112,7 @@ public class BistroMonitor implements Runnable {
 	        	continue;
 	        }
 	        LocalDateTime addedTime = entry.getValue();
-	        if (BistroServer.dateTime.isAfter(addedTime.plusMinutes(15))) {
+	        if (LocalDateTime.now().isAfter(addedTime.plusMinutes(15))) {
 	            // Time exceeded 15 minutes
 	            System.out.println(" Seating time exceeded for order: " + order.getConfirmationCode());
 	            if(order.getContact().contains("@")) sendEmailOrderExpired(order.getOrderNumber(), order.getContact());
@@ -153,7 +152,6 @@ public class BistroMonitor implements Runnable {
 	private void checkOrdersAndAdvanceTime() {
 	    Map<Table, Order> currentBistro = server.getCurrentBistro();
 
-	    System.out.println("Current simulated time: " + BistroServer.dateTime);
 
 	    for (Map.Entry<Table, Order> entry : currentBistro.entrySet()) {
 
@@ -169,7 +167,7 @@ public class BistroMonitor implements Runnable {
 	        LocalDateTime twoHoursAfterSitting = sittingTime.plusHours(2);
 
 	        //  check if current time is AFTER sitting time + 2 hours
-	        if (!BistroServer.dateTime.isBefore(twoHoursAfterSitting)) {
+	        if (!LocalDateTime.now().isBefore(twoHoursAfterSitting)) {
 
 	            
 	            System.out.println(" Order " + order.getConfirmationCode()
@@ -243,7 +241,7 @@ public class BistroMonitor implements Runnable {
 		Map<Table, Order> currentBistro = server.getCurrentBistro();
 		int guests=Integer.parseInt(order.getNumberOfGuests());
 		String confcode=order.getConfirmationCode();
-		String OrderDateTime = BistroServer.dateTime.format( DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+		String OrderDateTime = LocalDateTime.now().format( DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 		Map<String,Integer> guests_in_time = server.prepareGuestsInTimeList(new ShowTakenSlotsRequest(guests,OrderDateTime), false);
 		for (Order o : currentBistro.values()) {
 			if (o != null) {
@@ -270,7 +268,7 @@ public class BistroMonitor implements Runnable {
 					currentBistro.put(t, order); // Seat at the first available table
 					t.setTaken(true);
 					server.dbcon.putOrderToTable(order.getOrderNumber(), t.getId(), true);
-					pending.put(order, BistroServer.dateTime);
+					pending.put(order, LocalDateTime.now());
 					break;
 				}
         	}

@@ -9,7 +9,9 @@ public class CloseDateRequest extends Request {
 
     public CloseDateRequest(String date) {
         super(RequestType.CLOSE_DATE,
-              "UPDATE `date` SET status = 'CLOSE' WHERE specific_date = ?");
+				"INSERT INTO `date` (specific_date, open_hour, close_hour, status) " +
+					      "VALUES (?, ?, ?, ?) " +
+					      "ON DUPLICATE KEY UPDATE status = VALUES(status);");
         this.date = date;
     }
     
