@@ -15,11 +15,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import entities.Day;
 import entities.Order;
+import entities.SpecificDate;
 import entities.Table;
 import entities.requests.AddTableRequest;
 import entities.requests.AlterWaitlistRequest;
 import entities.requests.CheckConfCodeRequest;
+import entities.requests.GetHoursDateRequest;
+import entities.requests.GetHoursDayRequest;
 import entities.requests.GetTableRequest;
 import entities.requests.GetUserActiveOrdersRequest;
 import entities.requests.JoinWaitlistRequest;
@@ -292,6 +296,8 @@ public class BistroServer extends AbstractServer {
         ShowTakenSlotsRequest slotReq = new ShowTakenSlotsRequest(guests, req.getOrderDateTime());
         System.out.println("current Bistro in join waitlist before check: "+currentBistro.toString());
         Map<String,Integer> guestList = prepareGuestsInTimeList(slotReq, false);
+        List<SpecificDate> dates = dbcon.getAllDatesHours(new GetHoursDateRequest());
+        List<Day> days = dbcon.getAllDaysHours(new GetHoursDayRequest());       
         for (Order o : currentBistro.values()) {
         	if (o != null) {
         		guestList.remove(o.getConfirmationCode());
