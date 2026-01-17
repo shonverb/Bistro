@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
@@ -8,7 +9,7 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.text.Text?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="550.0" prefWidth="600.0" stylesheets="@styles.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="boundry.waitListController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="550.0" prefWidth="600.0" stylesheets="@styles.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="boundry.waitListController">
    <children>
       <Text layoutX="50.0" layoutY="60.0" styleClass="title-text" text="Join Waiting List" />
 
@@ -17,12 +18,12 @@
             <Label layoutX="30.0" layoutY="20.0" styleClass="card-title" text="Walk-in Registration" />
             
             <Label layoutX="30.0" layoutY="70.0" text="Number of Guests" />
-            <TextField fx:id="guestsNumberTxt" layoutX="180.0" layoutY="65.0" prefWidth="290.0" />
             
             <Label fx:id="idLabel" layoutX="30.0" layoutY="120.0" text="Email / Phone" />
             <TextField fx:id="identifyText" layoutX="180.0" layoutY="115.0" prefWidth="290.0" />
             
             <Button fx:id="submitBtn" layoutX="180.0" layoutY="170.0" mnemonicParsing="false" onAction="#onJoinWaitlistClick" prefWidth="290.0" text="Join Queue" />
+            <ComboBox fx:id="guestsNumberComboBox" layoutX="180.0" layoutY="66.0" prefWidth="150.0" />
          </children>
       </Pane>
       

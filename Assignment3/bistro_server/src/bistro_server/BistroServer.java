@@ -336,6 +336,15 @@ public class BistroServer extends AbstractServer {
 	public String handleJoinWaitlist(Request r) {
 		JoinWaitlistRequest req = (JoinWaitlistRequest) r;
 		int guests = Integer.parseInt(req.getNumberOfGuests());
+		int maxTable = 0;
+		for( Table t : currentBistro.keySet()) {
+			if( t.getCapacity() > maxTable) {
+				maxTable = t.getCapacity();
+			}
+		}
+		if( guests > maxTable) {
+			return "ERROR: Cannot accommodate party of size "+guests+". Maximum table size is "+maxTable+".";
+		}
 		ShowTakenSlotsRequest slotReq = new ShowTakenSlotsRequest(guests, req.getOrderDateTime());
 		System.out.println("current Bistro in join waitlist before check: " + currentBistro.toString());
 		Map<String, Integer> guestList = prepareGuestsInTimeList(slotReq, false);
@@ -438,20 +447,25 @@ public class BistroServer extends AbstractServer {
 		System.out.println("Adding new order for subscriber ID: " + req.getSubscriberId());
 		String email;
 		if (!req.getSubscriberId().equals("0")) {
+			System.out.println("Reading email for subscriber ID: " + req.getSubscriberId());
 
 			email = userManager.readEmail(req.getSubscriberId());
 		} else {
+			System.out.println("Using provided contact email: " + req.getContact());
 			email = req.getContact();
 		}
-		String parsableDate = req.getOrderDateTime().replace("T", " ");
-		LocalDateTime dateTime = LocalDateTime.parse(parsableDate, DT_FMT);
+		System.out.println("Order DateTime: " + req.getOrderDateTime());
+		LocalDateTime dateTime = LocalDateTime.parse(req.getOrderDateTime(), DT_FMT);
+		System.out.println("Parsed DateTime: " + dateTime.toString());
 		int day = dateTime.getDayOfWeek().getValue();
 		day = (day %7) + 1; // convert to 1=Sunday, 7=Saturday
 		boolean isClosed = !isBistroOpen(new IsBistroOpenRequest(dateTime));
+		System.out.println("Is Bistro Open at " + dateTime.toString() + ": " + !isClosed);
 		
 		if (isClosed) {
 			return null;
 		}
+		System.out.println("Subscriber email retrieved: " + email);
 
 		System.out.println("Retrieved email: " + email);
 		String orderNumber = orderManager.OrderNumber();
@@ -862,8 +876,9 @@ public class BistroServer extends AbstractServer {
 		int dayOfWeek = dateTimeToCheck.getDayOfWeek().getValue(); // 1=Monday, 7=Sunday
 		dayOfWeek = (dayOfWeek % 7) + 1; // Adjust to 1=Sunday, 7=Saturday
 		Boolean isDateClosed = scheduleManager.isDateClosed(dateTimeToCheck);
+		System.out.println("isDateClosed: " + isDateClosed);
 		if (isDateClosed == null) {
-			return scheduleManager.isDayClosed(dayOfWeek, dateTimeToCheck.toLocalTime());
+			return !scheduleManager.isDayClosed(dayOfWeek, dateTimeToCheck.toLocalTime());
 		}
 		return !isDateClosed;
 		}

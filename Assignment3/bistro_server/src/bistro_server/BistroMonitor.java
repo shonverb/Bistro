@@ -167,9 +167,12 @@ public class BistroMonitor implements Runnable {
 			}
 			System.out.println("Checking order number " + order.getOrderNumber());
 			if (isClosed) {
+				System.out.println("Is closed");
 				if (order.getContact().contains("@")) {
+					System.out.println("Sending email for closed bistro");
 					sendEmailBistroClosed(order.getOrderNumber(), order.getContact());
 				} else {
+					System.out.println("Updating UI for closed bistro");
 					ServerUI.updateInScreen("for contact: " + order.getContact() + " Order " + order.getOrderNumber()
 							+ "\nThe bistro is now closed. Please wrap up your visit. Thank you for dining with us!");
 				}

@@ -189,7 +189,16 @@ public class TerminalOrderManagementScreenController implements IController {
             return;
         }
         LeaveTableRequest leaveTableRequest = new LeaveTableRequest(confcode);
-        ClientUI.console.accept(leaveTableRequest);     
+        Object msg = ClientUI.console.sendAndWait(leaveTableRequest);
+        if (msg instanceof String) {
+			Platform.runLater(() -> {
+				Alert alert = new Alert(AlertType.INFORMATION);
+				alert.setTitle("Leave Table");
+				alert.setHeaderText(null);
+				alert.setContentText((String) msg);
+				alert.showAndWait();
+			});
+		}
         if(isLoggedIn.get()) {
         	loadUserActiveOrders();
         }
@@ -238,6 +247,10 @@ public class TerminalOrderManagementScreenController implements IController {
 
     @Override
     public void setResultText(Object result) {
+    	if (!(result instanceof String)) {
+			System.out.println("result is of type " + result.getClass().getName());
+    		return;
+		}
     	Platform.runLater(() -> {
             Alert alert = new Alert(AlertType.INFORMATION);
             alert.setTitle("Operation result");

@@ -46,6 +46,7 @@ public class ServerUI extends Application {
 	 * @param msg the message to be displayed
 	 */
 	public static void updateInScreen(String msg) {
-		aFrame.updateTxt(msg+"\n");
+		if (aFrame != null)
+			aFrame.updateTxt(msg+"\n");
 	}
 }
