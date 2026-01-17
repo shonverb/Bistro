@@ -28,6 +28,9 @@ public class MainScreenServerController {
     @FXML
     private TextArea resultTxt1;
     
+    @FXML
+    private Button seedDatabaseBtn;
+    
     /** Singleton instance of the controller */
     private static MainScreenServerController instance;
 
@@ -71,7 +74,11 @@ public class MainScreenServerController {
         }
         resultTxt.setText(clientString.toString());
     }
-
+    
+    @FXML
+    void onSeedDatabaseClick(ActionEvent event) {
+    	BistroServer.instance.seedDatabase();
+    }
     /** Handles the exit button click event to close the application */
     @FXML
     void onExitClick(ActionEvent event) {

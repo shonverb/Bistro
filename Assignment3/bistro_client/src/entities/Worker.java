@@ -9,12 +9,6 @@ import java.util.List;
  */
 public class Worker extends Subscriber implements Serializable {
 	private static final long serialVersionUID = 558341385970885494L;
-	private int subscriberID;
-	private String userName;
-	private String firstName;
-	private String lastName;
-	private List<Order> orderHistory;
-	
 	/**
 	 * Constructor to initialize a Worker object with the provided details.
 	 * 

@@ -1,7 +1,6 @@
 package entities;
 
 import java.io.Serializable;
-import java.time.LocalDate;
 /**
  * A class representing a table in the bistro
  */
@@ -15,8 +14,9 @@ public class Table implements Comparable<Table>, Serializable {
 	/** whether the table is taken or not*/
 	private boolean isTaken;
 	
-	private LocalDate active_from;
-	private LocalDate active_to;
+	/**whether the table is pending removal*/
+	private boolean isPendingRemoval;
+
 	
 	/**
 	 * Constructor for Table class
@@ -30,25 +30,16 @@ public class Table implements Comparable<Table>, Serializable {
 		this.id = id;
 		this.capacity = capacity;
 		this.isTaken = isTaken;
+		this.isPendingRemoval = false;
 	}
 	
-	/**
-	 * Constructor for Table class with active dates
-	 * 
-	 * @param id         the table's id
-	 * @param capacity   the table's capacity
-	 * @param isTaken    whether the table is taken or not
-	 * @param activeFrom the date from which the table is active
-	 * @param activeTo   the date until which the table is active
-	 */
-	public Table (int id, int capacity, boolean isTaken, LocalDate activeFrom, LocalDate activeTo) {
+	public Table(int id, int capacity, boolean isTaken, boolean isPendingRemoval) {
+		super();
 		this.id = id;
 		this.capacity = capacity;
 		this.isTaken = isTaken;
-		this.active_from = activeFrom;
-		this.active_to = activeTo;
-		
 	}
+	
 	
 	public int getCapacity() {
 		return capacity;
@@ -66,14 +57,13 @@ public class Table implements Comparable<Table>, Serializable {
 		return id;
 	}
 	
-	public LocalDate getActiveFrom() {
-		return active_from;
+	public boolean pendingRemoval() {
+		return isPendingRemoval;
 	}
 	
-	public LocalDate getActiveTo() {
-		return active_to;
+	public void setPendingRemoval(boolean pendingRemoval) {
+		this.isPendingRemoval = pendingRemoval;
 	}
-	
 	@Override
 	public int compareTo(Table o) {
 		if (this.capacity>o.capacity)

@@ -1,19 +1,24 @@
 package boundry;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import bistro_client.BistroClient;
 import entities.User;
 import entities.UserType;
+import entities.requests.GetHoursDateRequest;
+import entities.requests.GetHoursDayRequest;
+import entities.requests.GetMaxTableRequest;
 import entities.requests.JoinWaitlistRequest;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.util.Duration;
 
 /**
  * Controller for the Waitlist screen. Handles user interactions for joining the
@@ -24,12 +29,14 @@ public class waitListController implements IController {
     /** Property to track login status */
     private final BooleanProperty isLoggedIn = new SimpleBooleanProperty(false);
 
-    @FXML private TextField guestsNumberTxt;
+    @FXML private ComboBox<Integer> guestsNumberComboBox;
     @FXML private TextField identifyText; // This serves as the Contact field for Guests
     @FXML private Label idLabel;
     @FXML private TextArea resultTxt;
     @FXML private Button backBtn;
     @FXML private Button submitBtn;
+    private Timeline timeline;
+    private Integer maxGuests;
 
     /** Initializes the controller and binds UI elements based on user status */
     @FXML
@@ -41,22 +48,32 @@ public class waitListController implements IController {
         identifyText.managedProperty().bind(isLoggedIn.not());
         idLabel.visibleProperty().bind(isLoggedIn.not());
         idLabel.managedProperty().bind(isLoggedIn.not());
+        // Populate guests number ComboBox
+        maxGuests = (int)ClientUI.console.sendAndWait(new GetMaxTableRequest());
+        for (int i = 1; i <= maxGuests; i++) {
+			guestsNumberComboBox.getItems().add(i);
+		}
+        setUpTimeline();
+        
     }
+    private void setUpTimeline() {
+		timeline = new Timeline(new KeyFrame(Duration.seconds(5),event -> {
+			ClientUI.console.accept(new GetMaxTableRequest());
+		}));
+		timeline.setCycleCount(Timeline.INDEFINITE);
+		timeline.play();
+	}
 
-    /** Handles the Join Waitlist button click event
+	/** Handles the Join Waitlist button click event
      * @param event The action event triggered by the button click
     */
     @FXML
     public void onJoinWaitlistClick(ActionEvent event) {
-        String guests = guestsNumberTxt.getText().trim();
+        int guests = guestsNumberComboBox.getValue();
         // Use identifyText since it matches your FXML "Email / Phone Number" field
         String contactInput = identifyText.getText().trim(); 
 
-        // 1. Validate Guest Count
-        if (guests.isEmpty() || !guests.matches("\\d+") || Integer.parseInt(guests) <= 0) {
-            resultTxt.setText("Please enter a valid number of guests.");
-            return;
-        }
+        
         
         // 2. Validate Contact (Required only for Guests)
         if (user.getType() == UserType.GUEST) {
@@ -67,16 +84,15 @@ public class waitListController implements IController {
         }
 
         // 3. Prepare data for JoinWaitlistRequest
-        String orderDateTime = LocalDate.now().toString() + " " + LocalTime.now().toString().substring(0, 8);
         String subscriberId = (user.getType() != UserType.GUEST) ? 
                              String.valueOf(((entities.Subscriber)user).getSubscriberID()) : "0";
         String finalContact = (user.getType() != UserType.GUEST && contactInput.isEmpty()) ? 
                              user.getPhone() : contactInput;
-        String altDateTime = BistroClient.dateTime.format(BistroClient.fmt);
+        String altDateTime = LocalDateTime.now().format(BistroClient.fmt);
 
         // 4. Send Request
         ClientUI.console.accept(new JoinWaitlistRequest(
-            altDateTime, guests, subscriberId, finalContact
+            altDateTime, guests+"", subscriberId, finalContact
         ));
     }
 
@@ -92,9 +108,30 @@ public class waitListController implements IController {
 	 */
     @Override
     public void setResultText(Object result) {
-        String message = (String) result;
+    	if (result instanceof Integer) {
+			int newMax = (int) result;
+	        
+	        // Only touch the UI if the capaciTableCapacityty actually changed!
+	        if (this.maxGuests == null || this.maxGuests != newMax) {
+	            this.maxGuests = newMax;
+	            
+	            Platform.runLater(() -> {
+	                Integer currentlySelected = guestsNumberComboBox.getValue();
+	                
+	                guestsNumberComboBox.getItems().clear();
+	                for (int i = 1; i <= newMax; i++) {
+	                    guestsNumberComboBox.getItems().add(i);
+	                }
+	                
+	                if (currentlySelected != null && currentlySelected <= newMax) {
+	                    guestsNumberComboBox.setValue(currentlySelected);
+	                }
+	            });
+	        }
+	        return;
+    	}
+    	String message = (String) result;
         
-     // WRAP THE ENTIRE BLOCK: All UI updates (TextAreas, Alerts) must be on FX thread
         Platform.runLater(() -> {
             if (message.contains("PROMPT: NO_SEATS_FOUND")) {
                 showWaitlistConfirmPopup();
@@ -119,13 +156,13 @@ public class waitListController implements IController {
             resultTxt.setText("⏳ Adding you to the waitlist...");
             
             // Prepare the data again for the second attempt
-            String guests = guestsNumberTxt.getText().trim();
+            String guests = guestsNumberComboBox.getValue().toString();
             String contactInput = identifyText.getText().trim();
             String subscriberId = (user.getType() != UserType.GUEST) ? 
                                  String.valueOf(((entities.Subscriber)user).getSubscriberID()) : "0";
             String finalContact = (user.getType() == UserType.SUBSCRIBER && contactInput.isEmpty()) ? 
                                  user.getPhone() : contactInput;
-            String altDateTime = BistroClient.dateTime.format(BistroClient.fmt);
+            String altDateTime = LocalDateTime.now().format(BistroClient.fmt);
 
             // SEND SECOND REQUEST with the flag set to TRUE
             ClientUI.console.accept(new JoinWaitlistRequest(

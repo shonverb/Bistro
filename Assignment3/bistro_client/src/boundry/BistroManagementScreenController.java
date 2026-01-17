@@ -33,71 +33,79 @@ import javafx.scene.control.Alert.AlertType;
  * Controller class for the Bistro Management Screen. This class handles user
  * interactions and updates the UI accordingly.
  */
-public class BistroManagementScreenController implements IController{
+public class BistroManagementScreenController implements IController {
 	private User user;
-	@FXML private DatePicker datePicker;
-	@FXML private ComboBox<Integer> dayOfWeek;
-	@FXML private ComboBox<Integer> openHour;
-	@FXML private ComboBox<Integer> closeHour;
-	@FXML private Button confirm;
-	@FXML private Button tablesBtn;
-	@FXML private Button backBtn;
-	@FXML private TextField AddTableCapText;
-	@FXML private ComboBox<Table> currentTables;
-	@FXML private CheckBox removeTableCheck;
-	@FXML private CheckBox closeBistroCheck;
-    @FXML private TextField setTableCapText;
+	@FXML
+	private DatePicker datePicker;
+	@FXML
+	private ComboBox<Integer> dayOfWeek;
+	@FXML
+	private ComboBox<Integer> openHour;
+	@FXML
+	private ComboBox<Integer> closeHour;
+	@FXML
+	private Button confirm;
+	@FXML
+	private Button tablesBtn;
+	@FXML
+	private Button backBtn;
+	@FXML
+	private TextField AddTableCapText;
+	@FXML
+	private ComboBox<Table> currentTables;
+	@FXML
+	private CheckBox removeTableCheck;
+	@FXML
+	private CheckBox closeBistroCheck;
+	@FXML
+	private TextField setTableCapText;
 
-    /**
-     * Initializes the controller class. This method is automatically called
-     */
+	/**
+	 * Initializes the controller class. This method is automatically called
+	 */
 	@FXML
 	public void initialize() {
 		ClientUI.console.setController(this);
-		for (int i = 1; i <= 7; i++) dayOfWeek.getItems().add(i);
-		for (int i = 0; i <= 23; i++) openHour.getItems().add(i);
-		for (int i = 0; i <= 23; i++) closeHour.getItems().add(i);
+		for (int i = 1; i <= 7; i++)
+			dayOfWeek.getItems().add(i);
+		for (int i = 0; i <= 23; i++)
+			openHour.getItems().add(i);
+		for (int i = 0; i <= 23; i++)
+			closeHour.getItems().add(i);
 		Callback<ListView<Table>, ListCell<Table>> cellFactory = lv -> new ListCell<Table>() {
-		    @Override
-		    protected void updateItem(Table item, boolean empty) {
-		        super.updateItem(item, empty);
-		        if (empty || item == null) {
-		            setText(null);
-		            setTextFill(Color.BLACK);
-		        } else {
-		            if (item.getActiveTo() != null) {
-		                setText("Table " + item.getId() + " (Scheduled for removal: " + item.getActiveTo() + ")");
-		                setTextFill(Color.RED);
-		            }else if(item.getActiveFrom().isAfter(LocalDate.now())) {
-		                setText("Table " + item.getId() + " (Scheduled to start operation: " + item.getActiveFrom() + ")");
-		                setTextFill(Color.BLUE);
-		            } else {
-		                // Normal table
-		                setText("Table " + item.getId() + " (Capacity: " + item.getCapacity() + ")");
-		                setTextFill(Color.BLACK);
-		            }
-		        }
-		    }		    		    
+			@Override
+			protected void updateItem(Table item, boolean empty) {
+				super.updateItem(item, empty);
+				if (empty || item == null) {
+					setText(null);
+					setTextFill(Color.BLACK);
+				} else {
+					// Normal table
+					setText("Table " + item.getId() + " (Capacity: " + item.getCapacity() + ")");
+					setTextFill(Color.BLACK);
+				}
+			}
 		};
 		currentTables.setCellFactory(cellFactory);
 		currentTables.setButtonCell(cellFactory.call(null));
-		ClientUI.console.accept(new GetAllTablesRequest());
-		try {
-			Thread.sleep(100);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} // wait for response
-		LocalDate today = LocalDate.now();
-        LocalDate maxDate = today.plusMonths(1);
+		Object response = ClientUI.console.sendAndWait(new GetAllTablesRequest());
 
-        datePicker.setDayCellFactory(dp -> new DateCell() {
-            @Override
-            public void updateItem(LocalDate date, boolean empty) {
-                super.updateItem(date, empty);
-                if (empty || date.isBefore(today) || date.isAfter(maxDate)) setDisable(true);
-            }
-        });
+		if (response instanceof ArrayList<?>) {
+			currentTables.getItems().setAll((ArrayList<Table>) response);
+		}
+		LocalDate today = LocalDate.now();
+		LocalDate maxDate = today.plusMonths(1);
+
+		datePicker.setDayCellFactory(dp -> new DateCell() {
+
+			@Override
+			public void updateItem(LocalDate date, boolean empty) {
+				super.updateItem(date, empty);
+				if (empty || date.isBefore(today) || date.isAfter(maxDate))
+					setDisable(true);
+			}
+
+		});
 	}
 
 	/**
@@ -109,136 +117,173 @@ public class BistroManagementScreenController implements IController{
 	@FXML
 	void onConfirmClick(ActionEvent event) {
 		ArrayList<String> args = new ArrayList<>();
-    	boolean exceptionRaised = false;
-    	boolean hoursException = false;
+		boolean exceptionRaised = false;
+		boolean hoursException = false;
 		Integer day;
 		Integer open;
 		Integer close;
 		String status = "OPEN";
-    	try {
-        	LocalDate date = datePicker.getValue();
-    		day = dayOfWeek.getValue();
-    		open = openHour.getValue();
-    		close = closeHour.getValue();
-    		
-    		if (!closeBistroCheck.isSelected()) {
-    		
-	    		if((date != null && day != null) || (date == null && day == null)) {
-	    			exceptionRaised = true;
-	    		}
-	    		
-	    		else if(open == null || close == null) {
-	    			hoursException = true;
-	    		}
-	    			    		
-	    		else if (date != null && day == null){
+		try {
+			LocalDate date = datePicker.getValue();
+			day = dayOfWeek.getValue();
+			open = openHour.getValue();
+			close = closeHour.getValue();
+			
+			Object response = null;
+
+			if (!closeBistroCheck.isSelected()) {
+
+				if ((date != null && day != null) || (date == null && day == null)) {
+					exceptionRaised = true;
+				}
+
+				else if (open == null || close == null) {
+					hoursException = true;
+				}
+
+				else if (date != null && day == null) {
 					args.add(date.toString());
 					args.add(open.toString());
 					args.add(close.toString());
 					args.add(status);
-					WriteHoursDateRequest r = new WriteHoursDateRequest(args.get(0),args.get(1),args.get(2),args.get(3));
-					ClientUI.console.accept(r);
-	    		}
-	    		
-	    		else if (date == null && day != null) {
-	    			args.add(day.toString());
-	    			args.add(open.toString());
-	    			args.add(close.toString());
-	    			args.add(status);
-	    			ChangeHoursDayRequest r = new ChangeHoursDayRequest(args.get(0),args.get(1),args.get(2),args.get(3));
-	    			ClientUI.console.accept(r);
-	    		}
-    		}
-    		
-    		else {	    		
-	    		if (date != null && day == null){
-	    			args.add(date.toString());
-	    			CloseDateRequest r = new CloseDateRequest(args.get(0));
-	    			ClientUI.console.accept(r);
-	    			closeBistroCheck.setSelected(false);
-	    		}
-    			
-	    		else if (date == null && day != null) {
+					WriteHoursDateRequest r = new WriteHoursDateRequest(args.get(0), args.get(1), args.get(2),
+							args.get(3));
+					 response = ClientUI.console.sendAndWait(r);
+				}
+
+				else if (date == null && day != null) {
+					args.add(day.toString());
+					args.add(open.toString());
+					args.add(close.toString());
+					args.add(status);
+					ChangeHoursDayRequest r = new ChangeHoursDayRequest(args.get(0), args.get(1), args.get(2),
+							args.get(3));
+					 response = ClientUI.console.sendAndWait(r);
+				}
+			}
+
+			else {
+				if (date != null && day == null) {
+					args.add(date.toString());
+					CloseDateRequest r = new CloseDateRequest(args.get(0));
+					response = ClientUI.console.sendAndWait(r);
+					closeBistroCheck.setSelected(false);
+				}
+
+				else if (date == null && day != null) {
 					args.add(day.toString());
 					CloseDayRequest r = new CloseDayRequest(args.get(0));
-					ClientUI.console.accept(r);
+					response = ClientUI.console.sendAndWait(r);
 					closeBistroCheck.setSelected(false);
-	    		}
-    		}
-    	}catch (Exception e) {
-    		exceptionRaised = true;
-    	}
-    		
-    	if(exceptionRaised) {
-			Alert alert = new Alert(AlertType.ERROR);
-    		alert.setTitle("Error Occurred");
-    		alert.setHeaderText("Input Validation Failed");
-    		alert.setContentText("Please choose one from date and day of week");
-    		alert.showAndWait();
-    	}
-    	
-    	else if(hoursException) {
-			Alert alert = new Alert(AlertType.ERROR);
-    		alert.setTitle("Error Occurred");
-    		alert.setHeaderText("Input Validation Failed");
-    		alert.setContentText("Please choose both opening hour and closing hour");
-    		alert.showAndWait();
-    	}
+				}
+				
+			}
+			if (response instanceof String) {
+                Alert alert = new Alert(AlertType.INFORMATION);
+                alert.setTitle("Update Status");
+                alert.setHeaderText(null);
+                alert.setContentText((String) response);
+                alert.showAndWait();
+                datePicker.setValue(null);
+                dayOfWeek.setValue(null);
+                openHour.setValue(null);
+                closeHour.setValue(null);
+                closeBistroCheck.setSelected(false);
+            }
+		} catch (Exception e) {
+			exceptionRaised = true;
+		}
+
+		if (exceptionRaised) {
+			showAlert("Input Validation Failed", "Please choose one from date and day of week");
+		}
+
+		else if (hoursException) {
+			showAlert("Input Validation Failed", "Please choose both opening hour and closing hour");
+		}
 	}
 
 	/**
 	 * Handles the tables button click event. Validates input and sends appropriate
 	 * requests to the server.
-	 * 
-	 * @param event The action event triggered by clicking the tables button.
 	 */
 	@FXML
-	void onTablesBtnClick(ActionEvent event) throws InterruptedException {
-		try {
-			
-			if(removeTableCheck.isSelected()) {
-				Table selectedTable = currentTables.getValue();
-				if(selectedTable != null) {
-					ClientUI.console.accept(new RemoveTableRequest(selectedTable.getId()));
-					removeTableCheck.setSelected(false);
-				} else {
-					Alert alert = new Alert(AlertType.ERROR);
-		    		alert.setTitle("Error Occurred");
-		    		alert.setHeaderText("No Table Selected");
-		    		alert.setContentText("Please select a table to remove");
-		    		alert.showAndWait();
-				}
-			} 
-			
-			else if(!AddTableCapText.getText().isEmpty()) {
-				int capacity = Integer.parseInt(AddTableCapText.getText());
-				ClientUI.console.accept(new AddTableRequest(capacity));
-				AddTableCapText.clear();
-			} 
-			
-			else if(!setTableCapText.getText().isEmpty()) {
-				Table selectedTable = currentTables.getValue();
-				if(selectedTable != null) {
-					int newCapacity = Integer.parseInt(setTableCapText.getText());
-					ClientUI.console.accept(new UpdateTableCapacityRequest(selectedTable.getId(), newCapacity));
-					setTableCapText.clear();
-				} else {
-					Alert alert = new Alert(AlertType.ERROR);
-		    		alert.setTitle("Error Occurred");
-		    		alert.setHeaderText("No Table Selected");
-		    		alert.setContentText("Please select a table to update its capacity");
-		    		alert.showAndWait();
-				}
-			}
-			Thread.sleep(200);
-			ClientUI.console.accept(new GetAllTablesRequest());
-		} catch (NumberFormatException e) {
-			Alert alert = new Alert(AlertType.ERROR);
-			alert.setTitle("Error Occurred");
-			alert.setHeaderText("Invalid Input");
-			alert.setContentText("Please enter a valid number for table capacity");
-			alert.showAndWait();
+	void onTablesBtnClick(ActionEvent event) {
+		Table selectedTable = currentTables.getValue();
+		boolean isRemoveChecked = removeTableCheck.isSelected();
+		String addCapInput = AddTableCapText.getText().trim();
+		String setCapInput = setTableCapText.getText().trim();
+
+		int actionsAttempted = 0;
+		if (isRemoveChecked)
+			actionsAttempted++;
+		if (!addCapInput.isEmpty())
+			actionsAttempted++;
+		if (!setCapInput.isEmpty())
+			actionsAttempted++;
+
+		if (actionsAttempted > 1) {
+			showAlert("Conflicting Inputs", "Please perform only one action at a time:\n" + "- Remove a table\n"
+					+ "- OR Add a new table\n" + "- OR Update an existing table.");
+			return;
 		}
+		if (actionsAttempted == 0) {
+			showAlert("No Action", "Please select a table action or enter a capacity.");
+			return;
+		}
+
+		if ((isRemoveChecked || !setCapInput.isEmpty()) && selectedTable == null) {
+			showAlert("No Table Selected", "Please select a table from the list to perform this action.");
+			return;
+		}
+
+		try {
+			Object response = null;
+			if (isRemoveChecked) {
+				response = ClientUI.console.sendAndWait(new RemoveTableRequest(selectedTable.getId()));
+				removeTableCheck.setSelected(false);
+
+			} else if (!addCapInput.isEmpty()) {
+				int capacity = Integer.parseInt(addCapInput);
+				if (capacity <= 0)
+					throw new NumberFormatException(); // Ensure positive capacity
+				response = ClientUI.console.sendAndWait(new AddTableRequest(capacity));
+				AddTableCapText.clear();
+
+			} else if (!setCapInput.isEmpty()) {
+				int newCapacity = Integer.parseInt(setCapInput);
+				if (newCapacity <= 0)
+					throw new NumberFormatException(); // Ensure positive capacity
+				response = ClientUI.console.sendAndWait(new UpdateTableCapacityRequest(selectedTable.getId(), newCapacity));
+				setTableCapText.clear();
+			}
+			if (response instanceof String) {
+				Alert alert = new Alert(AlertType.INFORMATION);
+				alert.setTitle("Operation Result");
+				alert.setHeaderText(null);
+				alert.setContentText((String) response);
+				alert.showAndWait();
+			}
+
+			Object tableListResult = ClientUI.console.sendAndWait(new GetAllTablesRequest());
+	        
+	        if (tableListResult instanceof ArrayList<?>) {
+	            currentTables.getItems().clear();
+	            currentTables.getItems().addAll((ArrayList<Table>) tableListResult);
+	            currentTables.getSelectionModel().clearSelection();
+	        }
+
+		} catch (NumberFormatException e) {
+			showAlert("Invalid Input", "Capacity must be a valid positive number.");
+		}
+	}
+
+	private void showAlert(String header, String content) {
+		Alert alert = new Alert(AlertType.ERROR);
+		alert.setTitle("Error Occurred");
+		alert.setHeaderText(header);
+		alert.setContentText(content);
+		alert.showAndWait();
 	}
 
 	/**
@@ -251,31 +296,9 @@ public class BistroManagementScreenController implements IController{
 		ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/WorkerScreen.fxml", user);
 	}
 
-	/**
-	 * Sets the result text in the UI based on the provided result object.
-	 * 
-	 * @param result The result object containing data to be displayed.
-	 */
 	@Override
 	public void setResultText(Object result) {
-		if( result instanceof ArrayList<?>) {
-			
-			@SuppressWarnings("unchecked")
-			ArrayList<Table> tables = (ArrayList<Table>) result;
-			currentTables.getItems().clear();
-			for(Table t: tables) {
-				currentTables.getItems().add(t);
-			}
-		}
-		else {
-			Platform.runLater(()-> {
-			Alert alert = new Alert(AlertType.INFORMATION);
-			alert.setTitle("Operation Result");
-			alert.setHeaderText(null);
-			alert.setContentText((String)result);
-			alert.showAndWait();
-			});
-		}
+		// No implementation needed for this controller
 	}
 
 	/**
@@ -285,6 +308,6 @@ public class BistroManagementScreenController implements IController{
 	 */
 	@Override
 	public void setUser(User user) {
-		this.user = user;	
-	}	
+		this.user = user;
+	}
 }

@@ -11,6 +11,7 @@ public class Day implements Serializable{
 	private int day;
 	private Time open;
 	private Time close;
+	private boolean isClosed;
 	
 	/**
 	 * Constructs a Day object with specified day, opening time, and closing time.
@@ -35,5 +36,12 @@ public class Day implements Serializable{
 	
 	public Time getClose() {
 		return this.close;
+	}
+
+	public boolean isClosed() {
+		return isClosed;
+	}
+	public void setClosed(boolean isClosed) {
+		this.isClosed = isClosed;
 	}
 }
