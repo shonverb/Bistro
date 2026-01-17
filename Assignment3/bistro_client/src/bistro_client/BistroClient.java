@@ -11,7 +11,12 @@ public class BistroClient extends AbstractClient{
 	/**The controller of the screen currently being displayed*/
     private IController controller;
     public static DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
+    
+    /**variables for synchronous communication*/
+    private volatile boolean waitingForResponse = false;
+    private Object synchResponse = null;
+    private final Object lock = new Object();
+    
     /**
      * creating client and connecting it to server
      * @param host
@@ -25,12 +30,43 @@ public class BistroClient extends AbstractClient{
             e.printStackTrace();
         }
     }
+	
+	public Object sendAndWait(Object msg) {
+		synchronized(lock) {
+			try {
+				synchResponse = null;
+				waitingForResponse = true;
+				
+				sendToServer(msg);
+				
+				lock.wait(5000); // wait for response or timeout after 5 seconds
+				
+			} catch(IOException | InterruptedException e) {
+				e.printStackTrace();
+				return null;
+			} finally {
+				waitingForResponse = false;
+			}
+		}
+		return synchResponse;
+	}
+	
 	/**
 	 * handling message from server
 	 */
 	@Override
 	protected void handleMessageFromServer(Object msg) {
-	    controller.setResultText(msg);
+		synchronized(lock) {
+			if (waitingForResponse) {
+				synchResponse = msg;
+				waitingForResponse = false;
+				lock.notifyAll();
+				return;
+			}
+		}
+		if (controller != null) {
+			controller.setResultText(msg);	
+		}
 	}
 
     /**Setting the controller field whenever a screen is switched*/

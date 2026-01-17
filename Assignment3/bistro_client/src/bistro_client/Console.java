@@ -31,11 +31,19 @@ public class Console {
   	public void setController(IController controller) {
     	  bc.setController(controller);
   	}
+  	/**
+     * Sends a request and waits for the server response before continuing.
+     * @param r The request object
+     * @return The response object from the server (or null if timeout/error)
+     */
+    public Object sendAndWait(Request r) {
+        if (bc == null) return null;
+        return bc.sendAndWait(r);
+    }
   	
   	/**sending request to server*/
     public void accept(Request r) 
     {
-    	System.out.println("in accept");
     	try {
 			bc.sendToServer(r);
 		} catch (IOException e) {
@@ -69,10 +77,45 @@ public class Console {
     	}          
 	}
 	
+	/**
+	 * Overloaded method to switch screens programmatically (e.g., from a Timer).
+	 * @param currentStage The stage to close/hide
+	 * @param newScreenPath Path to the new FXML
+	 * @param user The user object to pass
+	 */
+	public void switchScreen(Stage currentStage, String newScreenPath, User user) {
+	    try {
+	        FXMLLoader loader = new FXMLLoader(getClass().getResource(newScreenPath));
+	        Parent root = loader.load();
+	        Object main = loader.getController();
+	        
+	        if (user != null && main instanceof IController) {
+	            ((IController)main).setUser(user);
+	        }
+	        
+	        Scene scene = new Scene(root);
+	        Stage primaryStage = new Stage();
+	        
+	        // Hide the old stage if it exists
+	        if (currentStage != null) {
+	            currentStage.hide(); 
+	        }
+	        
+	        primaryStage.setScene(scene);
+	        primaryStage.show();
+	        
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	        System.out.println("Couldn't switch to screen " + newScreenPath);
+	    }
+	}
+	
+	
 	/**quitting the client*/
 	public void quit() {
 		bc.quit();
 	}
+	
 	
 
 }

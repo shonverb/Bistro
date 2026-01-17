@@ -132,7 +132,7 @@ public class TableManager {
             	server.getAdvanceWaitlist().cancel(o.confirmationCode);
             }
             if(o.contact != null && o.contact.contains("@")) {
-                EmailService.getInstance().sendEmail(o.contact, "Your Order (#"+(o.id)+")",
+                new EmailService().sendEmail(o.contact, "Your Order (#"+(o.id)+")",
                     "Dear customer,\n\nunfortunately, due to changes in our tables capacity ("+reason+"), " +
                     "we cannot accomodate you and your guests today.\nPlease come again at a future time.");
             } else {

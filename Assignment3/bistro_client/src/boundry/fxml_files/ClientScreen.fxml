@@ -17,7 +17,7 @@
             <VBox layoutX="40.0" layoutY="30.0" spacing="15.0">
                <Label styleClass="card-title" text="Actions" />
                
-               <Button fx:id="orderManagementBtn" mnemonicParsing="false" onAction="#onOrderManagementClick" prefWidth="250.0" text="New Order" />
+               <Button fx:id="orderManagementBtn" mnemonicParsing="false" onAction="#onOrderManagementClick" prefWidth="250.0" text="Order Management" />
                <Button fx:id="orderHistoryBtn" mnemonicParsing="false" onAction="#onOrderHistoryClick" prefWidth="250.0" styleClass="button-secondary" text="View My Order History" />
                <Button fx:id="waitingListBtn" mnemonicParsing="false" onAction="#onWaitingListClick" prefWidth="250.0" styleClass="button-secondary" text="Check Waiting List Queue" />
                <Button fx:id="changeDetailsBtn" mnemonicParsing="false" onAction="#onChangeDetailsClick" prefWidth="250.0" styleClass="button-secondary" text="Update My Details" />

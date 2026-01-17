@@ -24,7 +24,7 @@ public class WriteHoursDateRequest extends Request{
 		super(RequestType.WRITE_HOURS_DATE,
 				"INSERT INTO `date` (specific_date, open_hour, close_hour, status) " +
 					      "VALUES (?, ?, ?, ?) " +
-					      "ON DUPLICATE KEY UPDATE open_hour = VALUES(open_hour), close_hour = VALUES(close_hour)"
+					      "ON DUPLICATE KEY UPDATE open_hour = VALUES(open_hour), close_hour = VALUES(close_hour), status = VALUES(status);"
 		);
 		this.date = date;
 		this.open = open;

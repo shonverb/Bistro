@@ -512,7 +512,6 @@ public class OrderManager {
 	 * @throws SQLException
 	 */
 	public void cancelOrdersOutsideHours(Connection conn, String date, String openTime, String closeTime) throws SQLException {
-	    System.out.println("DEBUG: Cancelling orders outside hours. Input: " + date + " | Open: " + openTime + " | Close: " + closeTime);
 	    List<String> cnl = new ArrayList<>();
 
 	    // 1. Determine if input is a specific date (YYYY-MM-DD) or a Day of Week
@@ -547,7 +546,6 @@ public class OrderManager {
 	        stmt.setTime(2, Time.valueOf(openTime));
 	        stmt.setTime(3, Time.valueOf(closeTime));
 	        
-	        System.out.println("DEBUG: Executing select query: " + stmt.toString());
 
 	        ResultSet rs = stmt.executeQuery();
 	        while (rs.next()) {
@@ -556,7 +554,7 @@ public class OrderManager {
 	    }
 
 
-	    EmailService emailService = EmailService.getInstance();
+	    EmailService emailService =new EmailService();
 	    for (String email : cnl) {
 	        if (email.contains("@")) {
 	            String subject = "Order Cancellation Notice";
@@ -582,7 +580,6 @@ public class OrderManager {
 	        stmt.setTime(3, Time.valueOf(closeTime));
 	        stmt.executeUpdate();
 	    }
-	    System.out.println("DEBUG: Orders updated to CANCELLED.");
 	}
 	/**
 	 * the method cancels all orders for a specific date in the database
@@ -610,7 +607,7 @@ public class OrderManager {
 	        }
 	    }
 
-	    EmailService emailService = EmailService.getInstance();
+	    EmailService emailService =new EmailService();
 	    for (String contact : cnl) {
 	        if (contact.contains("@")) {
 	            String subject = "Order Cancellation Notice";
@@ -668,7 +665,7 @@ public class OrderManager {
 	        }
 	    }
 
-	    EmailService emailService = EmailService.getInstance();
+	    EmailService emailService = new EmailService();
 	    for (String contact : cnl) {
 	        if (contact.contains("@")) {
 	            String subject = "Order Cancellation Notice";

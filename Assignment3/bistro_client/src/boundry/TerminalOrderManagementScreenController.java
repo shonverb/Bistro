@@ -190,11 +190,6 @@ public class TerminalOrderManagementScreenController implements IController {
         }
         LeaveTableRequest leaveTableRequest = new LeaveTableRequest(confcode);
         ClientUI.console.accept(leaveTableRequest);     
-        try {
-			Thread.sleep(300);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
         if(isLoggedIn.get()) {
         	loadUserActiveOrders();
         }
@@ -214,7 +209,7 @@ public class TerminalOrderManagementScreenController implements IController {
     }
     
     @FXML
-    void onLeaveWaitingListBtnClick(ActionEvent event) throws IOException, InterruptedException{
+    void onLeaveWaitingListBtnClick(ActionEvent event) throws IOException{
         String rawCode = getEffectiveConfCode(); // Use helper
         
         boolean exceptionRaised = false;
@@ -235,7 +230,6 @@ public class TerminalOrderManagementScreenController implements IController {
         else {
             AlterWaitlistRequest r = new AlterWaitlistRequest(rawCode, RequestType.LEAVE_WAITLIST);
             ClientUI.console.accept(r);
-            Thread.sleep(300);
             if(isLoggedIn.get()) {
 				loadUserActiveOrders();
 			}
@@ -244,24 +238,6 @@ public class TerminalOrderManagementScreenController implements IController {
 
     @Override
     public void setResultText(Object result) {
-        if(result instanceof ArrayList) {
-        	List<String> confCodes = (List<String>) result;
-        	Platform.runLater(() -> {
-                if (confCodeCombo != null) {
-                    confCodeCombo.getItems().clear(); // Clear old data
-                    
-                    if (confCodes.isEmpty()) {
-                        confCodeCombo.setPromptText("No active orders found");
-                    } else {
-                        confCodeCombo.getItems().addAll(confCodes);
-                        confCodeCombo.setPromptText("Select an order...");
-                        // Optional: Select the first one automatically
-                        confCodeCombo.getSelectionModel().selectFirst();
-                    }
-                }
-            });
-        }
-        else {
     	Platform.runLater(() -> {
             Alert alert = new Alert(AlertType.INFORMATION);
             alert.setTitle("Operation result");
@@ -269,7 +245,6 @@ public class TerminalOrderManagementScreenController implements IController {
             alert.setContentText((String) result);
             alert.showAndWait();
         });
-        }
     }
 
     @Override
@@ -291,12 +266,23 @@ public class TerminalOrderManagementScreenController implements IController {
         
         confCodeCombo.getItems().clear();
         
-        ClientUI.console.accept(new GetUserActiveOrdersRequest(((Subscriber)user).getSubscriberID()));
-        try {
-			Thread.sleep(300);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+        Object result = ClientUI.console.sendAndWait(new GetUserActiveOrdersRequest(((Subscriber)user).getSubscriberID()));
+        if(result instanceof ArrayList) {
+        	List<String> confCodes = (List<String>) result;
+        	Platform.runLater(() -> {
+                if (confCodeCombo != null) {
+                    confCodeCombo.getItems().clear();
+                    
+                    if (confCodes.isEmpty()) {
+                        confCodeCombo.setPromptText("No active orders found");
+                    } else {
+                        confCodeCombo.getItems().addAll(confCodes);
+                        confCodeCombo.setPromptText("Select an order...");
+                        confCodeCombo.getSelectionModel().selectFirst();
+                    }
+                }
+            });
+        }
         
     }
     

@@ -85,8 +85,10 @@ public class LoginScreenController implements IController{
     }
     
     private void checkIfBistroIsOpen() throws InterruptedException {
-		ClientUI.console.accept(new IsBistroOpenRequest(LocalDateTime.now()));
-		Thread.sleep(600); // wait for server response
+		Object response = ClientUI.console.sendAndWait(new IsBistroOpenRequest(LocalDateTime.now()));
+		if(response instanceof Boolean) {
+			bistroIsOpen = (Boolean)response;
+		}
 		
 	}
 

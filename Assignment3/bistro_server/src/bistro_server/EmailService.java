@@ -12,16 +12,8 @@ public class EmailService {
 	/**the password to the email that sends the messages*/
     private final String password = System.getenv("BISTRO_EMAIL_PASS");
     
-    private static EmailService instance;
     
-    private EmailService() {};
     
-    public static EmailService getInstance() {
-    	if(instance==null) {
-    		instance = new EmailService();
-    	}
-    	return instance;
-    }
     
     /**
      * A method that sends a message to the recipient
@@ -58,7 +50,7 @@ public class EmailService {
 
             Transport.send(message);
 
-            System.out.println("Email Sent Successfully!");
+            System.out.println("Email Sent Successfully to contact "+ recipient);
 
         } catch (MessagingException e) {
             e.printStackTrace();

@@ -13,6 +13,8 @@ import entities.requests.GetHoursDateRequest;
 import entities.requests.GetHoursDayRequest;
 import entities.requests.GetMaxTableRequest;
 import entities.requests.ReserveRequest;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -20,6 +22,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
+import javafx.util.Duration;
 import javafx.util.Pair;
 import entities.Subscriber;
 
@@ -40,6 +43,8 @@ public class OrderScreenController implements IController {
 	private ComboBox<Integer> guestsComboBox;
 	@FXML
 	private TextArea resultTxt;
+	
+	private Timeline datePickerTimeline;
 
 	/** Contact input for guest users */
 	@FXML
@@ -71,35 +76,28 @@ public class OrderScreenController implements IController {
 
 		contactBox.visibleProperty().bind(isLoggedIn.not());
 		contactBox.managedProperty().bind(isLoggedIn.not());
-		ClientUI.console.accept(new GetMaxTableRequest());
-		ClientUI.console.accept(new GetHoursDateRequest());
-		ClientUI.console.accept(new GetHoursDayRequest());
+		maxTableCapacity = (Integer)ClientUI.console.sendAndWait(new GetMaxTableRequest());
+		allSpecificDates = (List<SpecificDate>)ClientUI.console.sendAndWait(new GetHoursDateRequest());
+		allDays = (List<Day>)ClientUI.console.sendAndWait(new GetHoursDayRequest());
 
-		Thread.sleep(1000);
 		for (int i = 1; i <= maxTableCapacity; i++) {
 			guestsComboBox.getItems().add(i);
 		}
-		List<Integer> closedDays = allDays.stream().filter(Day::isClosed).map(Day::getDay).toList();
-		List<LocalDate> closedDates = allSpecificDates.stream().filter(SpecificDate::isClosed)
-				.map(SpecificDate::getDate).toList();
-		LocalDate today = LocalDate.now();
-		LocalDate maxDate = today.plusMonths(1);
-
-		orderDatePicker.setDayCellFactory(dp -> new DateCell() {
-			@Override
-			public void updateItem(LocalDate date, boolean empty) {
-				super.updateItem(date, empty);
-				int dayOfWeek = date.getDayOfWeek().getValue();
-				dayOfWeek = (dayOfWeek % 7) + 1;
-
-				if (empty || date.isBefore(today) || date.isAfter(maxDate) || closedDays.contains(dayOfWeek)
-						|| closedDates.contains(date))
-					setDisable(true);
-			}
-		});
+		refreshDatePicker();
+		setupPollingForDatePicker();
 
 		orderDatePicker.valueProperty().addListener((obs, oldDate, newDate) -> updateAvailableTimes(newDate));
 
+	}
+
+	private void setupPollingForDatePicker() {
+		datePickerTimeline = new Timeline(new KeyFrame(Duration.seconds(5),event -> {
+			ClientUI.console.accept(new GetHoursDateRequest());
+			ClientUI.console.accept(new GetHoursDayRequest());
+			ClientUI.console.accept(new GetMaxTableRequest());
+		}));
+		datePickerTimeline.setCycleCount(Timeline.INDEFINITE);
+		datePickerTimeline.play();
 	}
 
 	/**
@@ -142,7 +140,9 @@ public class OrderScreenController implements IController {
 	 * @param selectedDate
 	 */
 	private void updateAvailableTimes(LocalDate selectedDate) {
+		String currentlySelectedTime = timeComboBox.getValue();
 		timeComboBox.getItems().clear();
+		
 		if (selectedDate == null)
 			return;
 
@@ -161,6 +161,10 @@ public class OrderScreenController implements IController {
 				continue;
 			timeComboBox.getItems().add(t.toString());
 		}
+		
+		if (currentlySelectedTime != null && timeComboBox.getItems().contains(currentlySelectedTime)) {
+	        timeComboBox.setValue(currentlySelectedTime);
+	    }
 	}
 
 	/**
@@ -235,6 +239,9 @@ public class OrderScreenController implements IController {
 	 */
 	@FXML
 	void onBackClick(ActionEvent event) throws IOException {
+		if(datePickerTimeline !=null) {
+			datePickerTimeline.stop();
+		}
 		ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/AppOrderManagementScreen.fxml", user);
 	}
 
@@ -256,6 +263,10 @@ public class OrderScreenController implements IController {
 	 *               String message, or Integer max table capacity.
 	 */
 	public void setResultText(Object result) {
+		if(result == null) {
+			resultTxt.setText("The restaurant is currently closed on the selected date.\nPlease refresh and choose another date.");
+			return;
+		}
 		if (result instanceof List<?> list) {
 			if (!list.isEmpty()) {
 				Object first = list.get(0);
@@ -265,12 +276,78 @@ public class OrderScreenController implements IController {
 					allSpecificDates = (List<SpecificDate>) list;
 				}
 			}
-			Platform.runLater(() -> updateAvailableTimes(orderDatePicker.getValue()));
+			Platform.runLater(() -> {
+				updateAvailableTimes(orderDatePicker.getValue());
+				refreshDatePicker();
+			
+			});
 		} else if (result instanceof String msg) {
 			resultTxt.setText(msg);
 		} else if (result instanceof Integer) {
-			this.maxTableCapacity = (int) result;
+			int newMax = (int) result;
+	        
+	        // Only touch the UI if the capacity actually changed!
+	        if (this.maxTableCapacity == null || this.maxTableCapacity != newMax) {
+	            this.maxTableCapacity = newMax;
+	            
+	            Platform.runLater(() -> {
+	                Integer currentlySelected = guestsComboBox.getValue();
+	                
+	                guestsComboBox.getItems().clear();
+	                for (int i = 1; i <= newMax; i++) {
+	                    guestsComboBox.getItems().add(i);
+	                }
+	                
+	                if (currentlySelected != null && currentlySelected <= newMax) {
+	                    guestsComboBox.setValue(currentlySelected);
+	                }
+	            });
+	        }
 		}
+	}
+
+	private void refreshDatePicker() {
+		if (allDays == null || allSpecificDates == null) {
+	        return; 
+	    }
+		if (orderDatePicker.isShowing()) {
+	        return;
+	    }
+		List<Integer> closedDays = allDays.stream().filter(Day::isClosed).map(Day::getDay).toList();
+		List<LocalDate> closedDates = allSpecificDates.stream().filter(SpecificDate::isClosed)
+				.map(SpecificDate::getDate).toList();
+		List<LocalDate> openDates = allSpecificDates.stream().filter(d -> !d.isClosed())
+				.map(SpecificDate::getDate).toList();
+		LocalDate today = LocalDate.now();
+		LocalDate maxDate = today.plusMonths(1);
+
+		orderDatePicker.setDayCellFactory(dp -> new DateCell() {
+			@Override
+			public void updateItem(LocalDate date, boolean empty) {
+				super.updateItem(date, empty);
+				setStyle(""); 
+	            setDisable(false);
+				int dayOfWeek = date.getDayOfWeek().getValue();
+				dayOfWeek = (dayOfWeek % 7) + 1;
+
+				if (empty || date.isBefore(today) || date.isAfter(maxDate)) {
+					setDisable(true);
+					setStyle("-fx-background-color: #ffc0cb;"); // light red
+				}
+				else if(closedDates.contains(date)) {
+					setDisable(true);
+					setStyle("-fx-background-color: #ffc0cb;"); // light red
+				}
+				else if (openDates.contains(date)) {
+					setDisable(false);
+				}
+				else if (closedDays.contains(dayOfWeek)) {
+					setDisable(true);
+					setStyle("-fx-background-color: #ffc0cb;"); // light red
+				}
+			}
+		});
+		
 	}
 
 }

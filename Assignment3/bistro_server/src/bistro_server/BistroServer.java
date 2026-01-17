@@ -443,6 +443,15 @@ public class BistroServer extends AbstractServer {
 		} else {
 			email = req.getContact();
 		}
+		String parsableDate = req.getOrderDateTime().replace("T", " ");
+		LocalDateTime dateTime = LocalDateTime.parse(parsableDate, DT_FMT);
+		int day = dateTime.getDayOfWeek().getValue();
+		day = (day %7) + 1; // convert to 1=Sunday, 7=Saturday
+		boolean isClosed = !isBistroOpen(new IsBistroOpenRequest(dateTime));
+		
+		if (isClosed) {
+			return null;
+		}
 
 		System.out.println("Retrieved email: " + email);
 		String orderNumber = orderManager.OrderNumber();
@@ -833,8 +842,8 @@ public class BistroServer extends AbstractServer {
 			toSend = "No confirmation codes found for that contact in the specified time frame.";
 		} else {
 			toSend = "Potential Confirmation codes has been sent to your email.";
-			EmailService emailService = EmailService.getInstance();
-			emailService.sendEmail(req.getcontact(), "Bistro Management - Confirmation Code Inquiry",
+			
+			new EmailService().sendEmail(req.getcontact(), "Bistro Management - Confirmation Code Inquiry",
 					"Potential Confirmation codes found: " + res);
 		}
 
@@ -852,14 +861,12 @@ public class BistroServer extends AbstractServer {
 		LocalDateTime dateTimeToCheck = req.getDatetime();
 		int dayOfWeek = dateTimeToCheck.getDayOfWeek().getValue(); // 1=Monday, 7=Sunday
 		dayOfWeek = (dayOfWeek % 7) + 1; // Adjust to 1=Sunday, 7=Saturday
-		if (scheduleManager.isDateClosed(dateTimeToCheck)) {
-			return false;
+		Boolean isDateClosed = scheduleManager.isDateClosed(dateTimeToCheck);
+		if (isDateClosed == null) {
+			return scheduleManager.isDayClosed(dayOfWeek, dateTimeToCheck.toLocalTime());
 		}
-		if (scheduleManager.isDayClosed(dayOfWeek, dateTimeToCheck.toLocalTime())) {
-			return false;
+		return !isDateClosed;
 		}
-		return true;
-	}
 
 	public void refreshCurrentState() {
 		currentBistro = tableManager.getCurrentBistroState();

@@ -35,13 +35,11 @@ public class ScheduleManager {
 	 * @return The resulting string, a message to the user
 	 */
 	public String changeHoursDay(Request r) {
-		System.out.println("DEBUG: In changeHoursDay");
 		Connection conn = ConnectionPool.getInstance().getConnection();
 		ChangeHoursDayRequest req = (ChangeHoursDayRequest) r;
 		String openTime = String.format("%02d:00:00", Integer.parseInt(req.getOpen()));
 		String closeTime = String.format("%02d:00:00", Integer.parseInt(req.getClose()));
 		String query = req.getQuery();
-		System.out.println("DEBUG: Prepared query: " + query);
 		try (PreparedStatement stmt = conn.prepareStatement(query)) {
 			stmt.setTime(1, Time.valueOf(openTime));
 			stmt.setTime(2, Time.valueOf(closeTime));
@@ -49,7 +47,6 @@ public class ScheduleManager {
 			stmt.setString(4, req.getDay());
 
 			int rowsUpdated = stmt.executeUpdate();
-			System.out.println("DEBUG: Rows updated: " + rowsUpdated);
 			if (rowsUpdated > 0) {
 				orderManager.cancelOrdersOutsideHours(conn, req.getDay(), openTime, closeTime);
 				return "Details updated successfully.";
@@ -142,7 +139,7 @@ public class ScheduleManager {
 			ConnectionPool.getInstance().returnConnection(conn);
 		}
 
-		return null;
+		return new ArrayList<Day>();
 	}
 
 	/**
@@ -178,7 +175,7 @@ public class ScheduleManager {
 			ConnectionPool.getInstance().returnConnection(conn);
 		}
 
-		return null;
+		return  new ArrayList<SpecificDate>();
 	}
 	
 	/**
@@ -187,7 +184,7 @@ public class ScheduleManager {
 	 * @param dateTimeToCheck The specific date
 	 * @return true if the date is closed, false otherwise
 	 */
-	public boolean isDateClosed(LocalDateTime dateTimeToCheck) {
+	public Boolean isDateClosed(LocalDateTime dateTimeToCheck) {
 		Connection conn = ConnectionPool.getInstance().getConnection();
 		String query = "SELECT * FROM `date` WHERE specific_date = ?;";
 		try (PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -204,7 +201,7 @@ public class ScheduleManager {
 		} finally {
 			ConnectionPool.getInstance().returnConnection(conn);
 		}
-		return false;
+		return null;
 	}
 	
 	/**
