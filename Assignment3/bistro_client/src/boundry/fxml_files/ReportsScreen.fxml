@@ -24,7 +24,7 @@
          </children>
       </Pane>
 
-      <StackedBarChart fx:id="inAdvanceVsOnTheSpotChart" layoutX="50.0" layoutY="190.0" prefHeight="300.0" prefWidth="580.0" title="Ordered: Advance vs Spot">
+      <StackedBarChart fx:id="inAdvanceVsOnTheSpotChart" animated="false" layoutX="50.0" layoutY="190.0" prefHeight="300.0" prefWidth="580.0" title="Ordered: Advance vs Spot">
         <xAxis>
           <CategoryAxis fx:id="inAdvanceVsOnTheSpotXAxis" label="Day of Month" side="BOTTOM" tickLabelGap="4.0" />
         </xAxis>

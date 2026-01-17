@@ -23,7 +23,7 @@ public class ConnectionPool {
     // Database credentials
     private final String DB_URL = "jdbc:mysql://localhost:3306/bistro?allowLoadLocalInfile=true&serverTimezone=Asia/Jerusalem&useSSL=false";
     public static final String USER = "root"; 
-    public static final String PASS = "";
+    public static final String PASS = "123456789";
 
     /** Private constructor (Singleton Pattern)*/
     private ConnectionPool() {
