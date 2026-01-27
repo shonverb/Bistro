@@ -10,6 +10,7 @@ import java.util.List;
 import entities.Subscriber;
 import entities.User;
 import entities.requests.GetUserActiveOrdersRequest;
+import entities.requests.LogOutUserRequest;
 import entities.requests.LoginRequest;
 import entities.requests.RegisterRequest;
 import entities.requests.Request;
@@ -43,6 +44,12 @@ public class UserManager {
 			ConnectionPool.getInstance().returnConnection(conn);
 		}
 	}
+	
+	public Boolean logoutUser(Request r) {
+		int subscriberId = ((LogOutUserRequest) r).getSubscriberId();
+		BistroServer.loggedInUsers.remove(subscriberId);
+		return true;
+	}
 
 	/**
 	 * 
@@ -53,6 +60,13 @@ public class UserManager {
 		Connection conn = ConnectionPool.getInstance().getConnection();
 		String query = r.getQuery();
 		int subcriberId = ((LoginRequest) r).getId();
+		synchronized (BistroServer.loggedInUsers) {
+		    if (BistroServer.loggedInUsers.contains(subcriberId)) {
+		        return "ALREADY CONNECTED";
+		    }
+		    BistroServer.loggedInUsers.add(subcriberId);
+		}
+
 		try {
 			PreparedStatement stmt = conn.prepareStatement(query);
 			stmt.setInt(1, subcriberId);

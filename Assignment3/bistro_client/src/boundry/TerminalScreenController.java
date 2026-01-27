@@ -1,6 +1,9 @@
 package boundry;
 
+import entities.Subscriber;
 import entities.User;
+import entities.UserType;
+import entities.requests.LogOutUserRequest;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -74,6 +77,9 @@ public class TerminalScreenController implements IController {
 	 */
     @FXML
     void OnLogoutClick(ActionEvent event) {
+    	if(user.getType() != UserType.GUEST) {
+    	    Boolean closed = (Boolean)ClientUI.console.sendAndWait(new LogOutUserRequest(((Subscriber)user).getSubscriberID()));
+    	}
     	ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/loginScreen.fxml",null);
     }    
 }

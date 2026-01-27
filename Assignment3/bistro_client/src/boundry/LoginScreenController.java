@@ -10,6 +10,7 @@ import entities.User;
 import entities.UserType;
 import entities.Worker;
 import entities.requests.IsBistroOpenRequest;
+import entities.requests.LogOutUserRequest;
 import entities.requests.LoginRequest;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -159,7 +160,7 @@ public class LoginScreenController implements IController{
             ClientUI.console.accept(r);
             Thread.sleep(1000); // wait for server response
 
-            if (!serverResponse.equals("Not found")) {
+            if (!serverResponse.equals("Not found") && !serverResponse.equals("ALREADY CONNECTED")) {
                 String[] args = serverResponse.split(",");
                 String[] fullName = args[0].split(" ");
                 String fname = fullName[0];
@@ -190,6 +191,13 @@ public class LoginScreenController implements IController{
 
                 ClientUI.console.switchScreen(this, event, screen, user);
             }
+			else if (serverResponse.equals("ALREADY CONNECTED")) {
+				Alert alert = new Alert(Alert.AlertType.ERROR);
+				alert.setTitle("Error Occurred");
+				alert.setHeaderText("Input Validation Failed");
+				alert.setContentText("That user is already connected");
+				alert.showAndWait();
+			}
             else {
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Error Occurred");

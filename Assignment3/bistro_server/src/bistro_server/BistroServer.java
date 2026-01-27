@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -17,6 +18,7 @@ import java.util.Set;
 
 import entities.Order;
 import entities.Table;
+import entities.User;
 import entities.requests.AddTableRequest;
 import entities.requests.AlterWaitlistRequest;
 import entities.requests.CheckConfCodeRequest;
@@ -25,6 +27,7 @@ import entities.requests.GetUserActiveOrdersRequest;
 import entities.requests.IsBistroOpenRequest;
 import entities.requests.JoinWaitlistRequest;
 import entities.requests.LeaveTableRequest;
+import entities.requests.LogOutUserRequest;
 import entities.requests.RemoveTableRequest;
 import entities.requests.Request;
 import entities.requests.RequestHandler;
@@ -53,6 +56,10 @@ public class BistroServer extends AbstractServer {
 
 	/** A map that holds the state of the restaurant */
 	private HashMap<Table, Order> currentBistro;
+	
+	protected static Set<Integer> loggedInUsers = Collections.synchronizedSet(new HashSet<>());
+
+
 
 	
 
@@ -117,6 +124,7 @@ public class BistroServer extends AbstractServer {
 		handlers.put(RequestType.REGISTER_REQUEST, userManager::addNewUser);
 		handlers.put(RequestType.UPDATE_DETAILS, userManager::updateDetails);
 		handlers.put(RequestType.GET_ALL_SUBSCRIBERS, userManager::getAllSubscribers);
+		handlers.put(RequestType.LOGOUT_REQUEST, userManager::logoutUser);
 		
 		//handlers for scheduleManager
 		handlers.put(RequestType.CHANGE_HOURS_DAY, scheduleManager::changeHoursDay);
@@ -333,7 +341,7 @@ public class BistroServer extends AbstractServer {
 	 * @param r the JoinWaitlistRequest containing the order details
 	 * @return a message indicating success, prompt for confirmation, or failure
 	 */
-	public String handleJoinWaitlist(Request r) {
+	public synchronized  String  handleJoinWaitlist(Request r) {
 		JoinWaitlistRequest req = (JoinWaitlistRequest) r;
 		int guests = Integer.parseInt(req.getNumberOfGuests());
 		int maxTable = 0;

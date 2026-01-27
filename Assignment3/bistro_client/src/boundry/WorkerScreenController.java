@@ -1,7 +1,9 @@
 package boundry;
 
+import entities.Subscriber;
 import entities.User;
 import entities.UserType;
+import entities.requests.LogOutUserRequest;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.event.ActionEvent;
@@ -85,6 +87,9 @@ public class WorkerScreenController implements IController {
 	 */
     @FXML
     void onLogOutClick(ActionEvent event) {
+    	if(user.getType() != UserType.GUEST) {
+    	    Boolean closed = (Boolean)ClientUI.console.sendAndWait(new LogOutUserRequest(((Subscriber)user).getSubscriberID()));
+    	}
 		ClientUI.console.switchScreen(this, event, "/boundry/fxml_files/loginScreen.fxml", null);
     }
 
